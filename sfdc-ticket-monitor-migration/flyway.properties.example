@@ -1,0 +1,4 @@
+flyway.url=jdbc:mysql://localhost/
+flyway.user=root
+flyway.password=password321!
+flyway.schemas=sfdc_ticket_monitor

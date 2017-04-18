@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SFDC ticket</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 5px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <table style="width:100%">
+        <tr>
+            <th>attribute</th>
+            <th>value</th>
+        </tr>
+        <tr>
+            <td>Case Number</td>
+            <td>{{ ticket["CaseNumber"] }}</td>
+        </tr>
+        <tr>
+            <td>Account Name</td>
+            <td>{{ ticket["AccountName"] }}</td>
+        </tr>
+        <tr>
+            <td>Description</td>
+            <td>{{ ticket["Description"] }}</td>
+        </tr>
+        <tr>
+            <td>Last Viewed Date</td>
+            <td>{{ ticket["LastViewedDate"] }}</td>
+        </tr>
+        <tr>
+            <td>Priority</td>
+            <td>{{ ticket["Priority"] }}</td>
+        </tr>
+        <tr>
+            <td>Problem Type</td>
+            <td>{{ ticket["Problem_Type__c"] }}</td>
+        </tr>
+        <tr>
+            <td>Reason</td>
+            <td>{{ ticket["Reason"] }}</td>
+        </tr>
+        <tr>
+            <td>Status</td>
+            <td>{{ ticket["Status"] }}</td>
+        </tr>
+    </table>
+
+</body>
+</html>
