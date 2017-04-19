@@ -5,4 +5,8 @@
 sfdc_ticket_monitor.ini
 flyway.properties
 
+application.properties
+
+target/
+
 sfdc-ticket-monitor-migration/target

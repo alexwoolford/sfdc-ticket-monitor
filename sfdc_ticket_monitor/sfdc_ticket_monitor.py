@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from simple_salesforce import Salesforce
 from dateutil import parser
@@ -36,7 +37,7 @@ class SfdcTicketMonitor:
                                                                          self.config['mysql']['password'],
                                                                          self.config['mysql']['host'],
                                                                          self.config['mysql']['port'],
-                                                                         self.config['mysql']['dbname']))
+                                                                         self.config['mysql']['dbname']), convert_unicode=True)
         self.Base.prepare(self.engine, reflect=True)
         self.Ticket = self.Base.classes.ticket
         self.Notification = self.Base.classes.notification
@@ -45,7 +46,7 @@ class SfdcTicketMonitor:
 
     def capture_tickets(self):
         sf = Salesforce(username=self.config['sfdc']['email'], password=self.config['sfdc']['password'], security_token=self.config['sfdc']['token'])
-        sql_accounts = "SELECT accountid FROM opportunity WHERE opportunity.lead_se__c = '{0}' GROUP BY accountid".format(self.config['sfdc']['name'])
+        sql_accounts = "SELECT accountid FROM opportunity WHERE opportunity.lead_se__c = '{0}'".format(self.config['sfdc']['name'])
         accounts = sf.query(sql_accounts)
 
         for account in accounts['records']:

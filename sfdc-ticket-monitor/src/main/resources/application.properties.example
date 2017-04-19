@@ -1,0 +1,19 @@
+
+# sfdc
+sfdc.name=Alex Woolford
+sfdc.email=me@domain.com
+sfdc.password=password321!
+sfdc.token=gdbshGhSKbfsbaugjsuHjsh2
+sfdc.auth.endpoint=https://login.salesforce.com/services/Soap/u/39.0
+
+# mysql
+mysql.host=localhost
+mysql.username=sfdc_ticket_monitor
+mysql.password=password321!
+mysql.dbname=sfdc_ticket_monitor
+mysql.port=3306
+
+# sendgrid
+sendgrid.apikey=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
+sendgrid.from=me@domain.com
+sendgrid.to=me@domain.com
