@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -61,32 +62,39 @@ public class TicketCapture {
 
     static PartnerConnection connection;
 
-    @Scheduled(cron = "*/5 * * * * *")
+//    @Scheduled(cron = "*/5 * * * * *")
+    @PostConstruct
     public void captureTickets() throws IOException, TemplateException {
+
+        // create Freemarker template config
+        Configuration ftlConfig = new Configuration(Configuration.VERSION_2_3_26);
+        ftlConfig.setClassForTemplateLoading(TicketCapture.class, "/templates");
+        ftlConfig.setDefaultEncoding("UTF-8");
+        Template ticketEmailTemplate = ftlConfig.getTemplate("ticket-email.ftl");
 
         // create connection to SFDC
         ConnectorConfig config = new ConnectorConfig();
         config.setUsername(sfdcEmail);
         config.setPassword(sfdcPassword + sfdcToken);
         config.setAuthEndpoint(sfdcAuthEndpoint);
-
         try {
             connection = Connector.newConnection(config);
+            logger.info("Created connection to SFDC");
         } catch (ConnectionException e) {
             logger.error(e.toString());
-//            e.printStackTrace();
         }
 
         // update the status of all the tickets
         for (String accountId : getAccountIds(sfdcName)){
             getTickets(accountId);
+            logger.info("Persisted tickets for accountId: " + accountId + " to MySQL");
         }
 
         // notify user of any new tickets
         for (Ticket ticket : dbMapper.getOpenUnnotifiedTickets()){
 
             // create a map of all the ticket attributes to be processed by the Freemarker template
-            Map<String, String> map = new HashMap<String, String>();
+            Map<String, String> map = new HashMap<>();
             map.put("caseNumber", ticket.getCaseNumber());
             map.put("accountName", ticket.getAccountName());
             map.put("description", ticket.getDescription());
@@ -95,21 +103,15 @@ public class TicketCapture {
             map.put("reason", ticket.getReason());
             map.put("status", ticket.getStatus());
 
-            // initialize Freemarker template
-            // TODO: move the Freemarker config to the class constructor; no need to re-instantiate with each run
-            Configuration cfg = new Configuration(Configuration.VERSION_2_3_26);
-            cfg.setClassForTemplateLoading(TicketCapture.class, "/templates");
-            cfg.setDefaultEncoding("UTF-8");
-            Template template = cfg.getTemplate("ticket-email.ftl");
-
-            // render the template
+            // render the Freemarker template
             StringWriter stringWriter = new StringWriter();
-            template.process(map, stringWriter);
+            ticketEmailTemplate.process(map, stringWriter);
             String contentValue = stringWriter.toString();
 
-            // email unnotified tickets
+            // email unnotified ticket
             String subject = "case " + ticket.getCaseNumber() + " opened by " + ticket.getAccountName();
             sendMail(subject, contentValue);
+            logger.info("Email sent: " + subject);
 
             // record notification as being sent to avoid duplicate emails
             Notification notification = new Notification();
@@ -136,6 +138,7 @@ public class TicketCapture {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        logger.info("got list of account ID's for " + sfdcName + ": " + accountIdList);
         return accountIdList;
     }
 
@@ -143,6 +146,7 @@ public class TicketCapture {
     private void getTickets(String accountId) {
 
         try {
+            // TODO: consider using Freemarker templates to generate all the SFDC queries
             QueryResult queryResults = connection.query("SELECT name FROM account WHERE id='" + accountId + "'");
 
             String accountName = String.valueOf(queryResults.getRecords()[0].getChildren("Name").next().getValue());
@@ -168,6 +172,7 @@ public class TicketCapture {
                     ticket.setStatus(String.valueOf(queryResults.getRecords()[i].getChildren("Status").next().getValue()));
 
                     dbMapper.upsertTicket(ticket);
+                    logger.info("Upserted ticket " + ticket.getCaseNumber() + " for " + ticket.getAccountName() + " to MySQL");
                 }
             }
 
@@ -193,6 +198,7 @@ public class TicketCapture {
         } catch (IOException ex) {
             throw ex;
         }
+        logger.info("Email: " + subject + " sent");
     }
 
 }
