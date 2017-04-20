@@ -62,8 +62,7 @@ public class TicketCapture {
 
     static PartnerConnection connection;
 
-//    @Scheduled(cron = "*/5 * * * * *")
-    @PostConstruct
+    @Scheduled(cron = "*/5 * * * * *")
     public void captureTickets() throws IOException, TemplateException {
 
         // create Freemarker template config
