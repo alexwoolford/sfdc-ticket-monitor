@@ -21,32 +21,48 @@
         <th>value</th>
     </tr>
     <tr>
-        <td>Case Number</td>
-        <td>${caseNumber}</td>
+        <td>Account Name</td>
+        <td>${(accountName)!}</td>
     </tr>
     <tr>
-        <td>Account Name</td>
-        <td>${accountName}</td>
+        <td>Case Number</td>
+        <td>${(caseNumber)!}</td>
+    </tr>
+    <tr>
+        <td>Severity</td>
+        <td>${(severity)!}</td>
+    </tr>
+    <tr>
+        <td>Current Status Resolution</td>
+        <td>${(currentStatusResolution)!}</td>
+    </tr>
+    <tr>
+        <td>Product Component</td>
+        <td>${(productComponent)!}</td>
+    </tr>
+    <tr>
+        <td>Problem Statement/Question</td>
+        <td>${(problemStatementQuestion)!}</td>
     </tr>
     <tr>
         <td>Description</td>
-        <td>${description}</td>
+        <td>${(description)!}</td>
     </tr>
     <tr>
-        <td>Priority</td>
-        <td>${priority}</td>
+        <td>Contact Name</td>
+        <td>${(contactName)!}</td>
     </tr>
     <tr>
         <td>Problem Type</td>
-        <td>${problemType}</td>
+        <td>${(problemType)!}</td>
     </tr>
     <tr>
-        <td>Reason</td>
-        <td>${reason}</td>
+        <td>Problem Sub Type</td>
+        <td>${(problemSubType)!}</td>
     </tr>
     <tr>
         <td>Status</td>
-        <td>${status}</td>
+        <td>${(status)!}</td>
     </tr>
 </table>
 

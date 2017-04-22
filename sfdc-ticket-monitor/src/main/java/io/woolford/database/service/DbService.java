@@ -1,5 +1,7 @@
 package io.woolford.database.service;
 
+import io.woolford.database.entity.Account;
+import io.woolford.database.entity.Contact;
 import io.woolford.database.entity.Notification;
 import io.woolford.database.entity.Ticket;
 import io.woolford.database.mapper.DbMapper;
@@ -24,6 +26,18 @@ public class DbService {
 
     public List<Ticket> getOpenUnnotifiedTickets(){
         return dbMapper.getOpenUnnotifiedTickets();
+    }
+
+    public void upsertAccount(Account account){
+        dbMapper.upsertAccount(account);
+    }
+
+    public Account getAccountById(String accountId){
+        return dbMapper.getAccountById(accountId);
+    }
+
+    public Contact getContactById(String contactId){
+        return dbMapper.getContactById(contactId);
     }
 
 }

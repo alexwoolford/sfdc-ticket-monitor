@@ -17,7 +17,7 @@ The run the Python app (preferably via cron, to get regular updates):
     cd sfdc_ticket_monitor
     python sfdc_ticket_monitor.py
 
-The Java Spring version is a long-running application: it checks for new tickets every 5 minutes.
+The Java Spring version is a long-running application: it checks for new tickets every 20 minutes.
 
     cd sfdc-ticket-monitor
     mvn clean package

@@ -5,11 +5,16 @@ public class Ticket {
     private String accountId;
     private String accountName;
     private String caseNumber;
+    private String severity;
+    private String currentStatusResolution;
+    private String productComponent;
+    private String problemStatementQuestion;
     private String description;
     private String contactId;
-    private String lastViewedDate;
+    private String contactName;
     private String priority;
     private String problemType;
+    private String problemSubType;
     private String reason;
     private String status;
 
@@ -37,6 +42,38 @@ public class Ticket {
         this.caseNumber = caseNumber;
     }
 
+    public String getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(String severity) {
+        this.severity = severity;
+    }
+
+    public String getCurrentStatusResolution() {
+        return currentStatusResolution;
+    }
+
+    public void setCurrentStatusResolution(String currentStatusResolution) {
+        this.currentStatusResolution = currentStatusResolution;
+    }
+
+    public String getProductComponent() {
+        return productComponent;
+    }
+
+    public void setProductComponent(String productComponent) {
+        this.productComponent = productComponent;
+    }
+
+    public String getProblemStatementQuestion() {
+        return problemStatementQuestion;
+    }
+
+    public void setProblemStatementQuestion(String problemStatementQuestion) {
+        this.problemStatementQuestion = problemStatementQuestion;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -53,12 +90,12 @@ public class Ticket {
         this.contactId = contactId;
     }
 
-    public String getLastViewedDate() {
-        return lastViewedDate;
+    public String getContactName() {
+        return contactName;
     }
 
-    public void setLastViewedDate(String lastViewedDate) {
-        this.lastViewedDate = lastViewedDate;
+    public void setContactName(String contactName) {
+        this.contactName = contactName;
     }
 
     public String getPriority() {
@@ -75,6 +112,14 @@ public class Ticket {
 
     public void setProblemType(String problemType) {
         this.problemType = problemType;
+    }
+
+    public String getProblemSubType() {
+        return problemSubType;
+    }
+
+    public void setProblemSubType(String problemSubType) {
+        this.problemSubType = problemSubType;
     }
 
     public String getReason() {
@@ -99,11 +144,16 @@ public class Ticket {
                 "accountId='" + accountId + '\'' +
                 ", accountName='" + accountName + '\'' +
                 ", caseNumber='" + caseNumber + '\'' +
+                ", severity='" + severity + '\'' +
+                ", currentStatusResolution='" + currentStatusResolution + '\'' +
+                ", productComponent='" + productComponent + '\'' +
+                ", problemStatementQuestion='" + problemStatementQuestion + '\'' +
                 ", description='" + description + '\'' +
                 ", contactId='" + contactId + '\'' +
-                ", lastViewedDate='" + lastViewedDate + '\'' +
+                ", contactName='" + contactName + '\'' +
                 ", priority='" + priority + '\'' +
                 ", problemType='" + problemType + '\'' +
+                ", problemSubType='" + problemSubType + '\'' +
                 ", reason='" + reason + '\'' +
                 ", status='" + status + '\'' +
                 '}';

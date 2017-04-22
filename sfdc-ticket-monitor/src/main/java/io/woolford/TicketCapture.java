@@ -9,6 +9,8 @@ import com.sforce.ws.ConnectorConfig;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import io.woolford.database.entity.Account;
+import io.woolford.database.entity.Contact;
 import io.woolford.database.entity.Notification;
 import io.woolford.database.entity.Ticket;
 import io.woolford.database.mapper.DbMapper;
@@ -19,7 +21,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.Map;
 public class TicketCapture {
 
     // TODO: add logging throughout
+    // TODO: add cache hit stats
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${sfdc.name}")
@@ -62,7 +64,7 @@ public class TicketCapture {
 
     static PartnerConnection connection;
 
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 */20 * * * *")
     public void captureTickets() throws IOException, TemplateException {
 
         // create Freemarker template config
@@ -92,14 +94,20 @@ public class TicketCapture {
         // notify user of any new tickets
         for (Ticket ticket : dbMapper.getOpenUnnotifiedTickets()){
 
+            // TODO: ensure that null values are handled (notably severity and reason)
+
             // create a map of all the ticket attributes to be processed by the Freemarker template
             Map<String, String> map = new HashMap<>();
-            map.put("caseNumber", ticket.getCaseNumber());
             map.put("accountName", ticket.getAccountName());
+            map.put("caseNumber", ticket.getCaseNumber());
+            map.put("severity", ticket.getSeverity());
+            map.put("currentStatusResolution", ticket.getCurrentStatusResolution());
+            map.put("productComponent", ticket.getProductComponent());
+            map.put("problemStatementQuestion", ticket.getProblemStatementQuestion());
             map.put("description", ticket.getDescription());
-            map.put("priority", ticket.getPriority());
+            map.put("contactName", ticket.getContactName());
             map.put("problemType", ticket.getProblemType());
-            map.put("reason", ticket.getReason());
+            map.put("problemSubType", ticket.getProblemSubType());
             map.put("status", ticket.getStatus());
 
             // render the Freemarker template
@@ -124,10 +132,10 @@ public class TicketCapture {
     private List<String> getAccountIds(String sfdcName) {
 
         List<String> accountIdList = new ArrayList<String>();
-
+        QueryResult queryResults = null;
         try {
             // get the list of account ID's for SE
-            QueryResult queryResults = connection.query("SELECT accountid FROM opportunity WHERE opportunity.lead_se__c = '" + sfdcName + "'");
+            queryResults = connection.query("SELECT accountid FROM opportunity WHERE opportunity.lead_se__c = '" + sfdcName + "'");
             if (queryResults.getSize() > 0) {
                 for (int i=0; i < queryResults.getRecords().length; i++) {
                     String accountId = String.valueOf(queryResults.getRecords()[i].getChildren("AccountId").next().getValue());
@@ -144,29 +152,47 @@ public class TicketCapture {
     // gets tickets for an account ID
     private void getTickets(String accountId) {
 
+        QueryResult queryResults = null;
         try {
             // TODO: consider using Freemarker templates to generate all the SFDC queries
-            QueryResult queryResults = connection.query("SELECT name FROM account WHERE id='" + accountId + "'");
 
-            String accountName = String.valueOf(queryResults.getRecords()[0].getChildren("Name").next().getValue());
+            String accountName = getAccountName(accountId);
 
-            queryResults = connection.query("SELECT casenumber, contactid, description, reason, status, priority, problem_type__c, lastvieweddate FROM case WHERE accountId='" + accountId + "'");
+            queryResults = connection.query("SELECT casenumber, severity__c, current_status_resolution__c, " +
+                    "product_component__c, problem_statement_question__c, description, contactid, " +
+                    "priority, problem_type__c, problem_sub_type__c, reason, status FROM case WHERE accountId='" + accountId + "'");
 
             if (queryResults.getSize() > 0) {
 
                 for (int i=0; i < queryResults.getRecords().length; i++) {
 
-                    // TODO: fix date last viewed date so it's not stored as a string
                     // TODO: the way of accessing the values from the query results looks pretty ugly/amateurish
+
                     Ticket ticket = new Ticket();
+                    ticket.setCaseNumber(String.valueOf(queryResults.getRecords()[i].getChildren("CaseNumber").next().getValue()));
                     ticket.setAccountId(accountId);
                     ticket.setAccountName(accountName);
-                    ticket.setCaseNumber(String.valueOf(queryResults.getRecords()[i].getChildren("CaseNumber").next().getValue()));
+
+                    ticket.setSeverity(String.valueOf(queryResults.getRecords()[i].getChildren("Severity__c").next().getValue()));
+
+                    ticket.setCurrentStatusResolution(String.valueOf(queryResults.getRecords()[i].getChildren("Current_Status_Resolution__c").next().getValue()));
+                    ticket.setProductComponent(String.valueOf(queryResults.getRecords()[i].getChildren("Product_Component__c").next().getValue()));
+                    ticket.setProblemStatementQuestion(String.valueOf(queryResults.getRecords()[i].getChildren("Problem_Statement_Question__c").next().getValue()));
                     ticket.setDescription(String.valueOf(queryResults.getRecords()[i].getChildren("Description").next().getValue()));
-                    ticket.setContactId(String.valueOf(queryResults.getRecords()[i].getChildren("ContactId").next().getValue()));
-                    ticket.setLastViewedDate(String.valueOf(queryResults.getRecords()[i].getChildren("LastViewedDate").next().getValue()));
+
+                    String contactId = String.valueOf(queryResults.getRecords()[i].getChildren("ContactId").next().getValue());
+
+                    ticket.setContactId(contactId);
+
+                    if (contactId != "null"){
+                        String contactName = getContactName(contactId);
+                        logger.info("contactName: " + contactName);
+                        ticket.setContactName(contactName);
+                    }
+
                     ticket.setPriority(String.valueOf(queryResults.getRecords()[i].getChildren("Priority").next().getValue()));
                     ticket.setProblemType(String.valueOf(queryResults.getRecords()[i].getChildren("Problem_Type__c").next().getValue()));
+                    ticket.setProblemSubType(String.valueOf(queryResults.getRecords()[i].getChildren("Problem_Sub_Type__c").next().getValue()));
                     ticket.setReason(String.valueOf(queryResults.getRecords()[i].getChildren("Reason").next().getValue()));
                     ticket.setStatus(String.valueOf(queryResults.getRecords()[i].getChildren("Status").next().getValue()));
 
@@ -178,6 +204,50 @@ public class TicketCapture {
         } catch (ConnectionException e) {
             e.printStackTrace();
         }
+    }
+
+    private String getContactName(String contactId){
+
+        Contact contact = new Contact();
+        String contactName = null;
+        if (dbMapper.getContactById(contactId) == null){
+            QueryResult queryResults = null;
+            try {
+                queryResults = connection.query("SELECT name FROM contact WHERE id='" + contactId + "'");
+                logger.info("contact " + contactId + " retrieved from SFDC");
+            } catch (ConnectionException e) {
+                e.printStackTrace();
+            }
+            contactName = String.valueOf(queryResults.getRecords()[0].getChildren("Name").next().getValue());
+            contact.setContactId(contactId);
+            contact.setContactName(contactName);
+            dbMapper.upsertContact(contact);
+        } else {
+            contactName = dbMapper.getContactById(contactId).getContactName();
+        }
+        return contactName;
+    }
+
+    private String getAccountName(String accountId){
+
+        Account account = new Account();
+        String accountName = null;
+        if (dbMapper.getAccountById(accountId) == null){
+            QueryResult queryResults = null;
+            try {
+                queryResults = connection.query("SELECT name FROM account WHERE id='" + accountId + "'");
+            } catch (ConnectionException e) {
+                e.printStackTrace();
+            }
+            accountName = String.valueOf(queryResults.getRecords()[0].getChildren("Name").next().getValue());
+            account.setAccountId(accountId);
+            account.setAccountName(accountName);
+            dbMapper.upsertAccount(account);
+            logger.info("account " + accountId + " retrieved from MySQL");
+        } else {
+            accountName = dbMapper.getAccountById(accountId).getAccountName();
+        }
+        return accountName;
     }
 
     private void sendMail(String subject, String contentValue) throws IOException {

@@ -1,5 +1,7 @@
 package io.woolford.database.mapper;
 
+import io.woolford.database.entity.Account;
+import io.woolford.database.entity.Contact;
 import io.woolford.database.entity.Notification;
 import io.woolford.database.entity.Ticket;
 import org.apache.ibatis.annotations.Insert;
@@ -12,37 +14,47 @@ import java.util.List;
 @Component
 public interface DbMapper {
 
-    @Insert("INSERT INTO sfdc_ticket_monitor.ticket                                          " +
-            "    (`CaseNumber`, `AccountName`, `AccountId`, `ContactId`, `Description`,      " +
-            "      `Priority`, `Problem_Type__c`, `Reason`, `Status`)                        " +
-            "VALUES                                                                          " +
-            "    (#{caseNumber}, #{accountName}, #{accountId}, #{contactId}, #{description}, " +
-            "     #{priority}, #{problemType}, #{reason}, #{status})                         " +
-            "ON DUPLICATE KEY UPDATE accountName=#{accountName}, accountId=#{accountId},     " +
-            "                        contactId=#{contactId}, description=#{description},     " +
-            "                        priority=#{priority}, problem_Type__c=#{problemType},   " +
-            "                        reason=#{reason}, status=#{status}                      ")
+    @Insert("INSERT INTO sfdc_ticket_monitor.ticket                                                           " +
+            "    (`accountId`, `accountName`, `caseNumber`, `severity`, `productComponent`,                   " +
+            "     `problemStatementQuestion`, `description`, `currentStatusResolution`, `contactId`,          " +
+            "     `contactName`, `priority`, `problemType`, `problemSubType`, `reason`, `status`)             " +
+            "VALUES                                                                                           " +
+            "    (#{accountId}, #{accountName}, #{caseNumber}, #{severity}, #{productComponent},              " +
+            "     #{problemStatementQuestion}, #{description}, #{currentStatusResolution}, #{contactId},      " +
+            "     #{contactName}, #{priority}, #{problemType}, #{problemSubType}, #{reason}, #{status})       " +
+            "ON DUPLICATE KEY UPDATE                                                                          " +
+            "     accountId=#{accountId}, accountName=#{accountName}, severity=#{severity},                   " +
+            "     productComponent=#{productComponent}, problemStatementQuestion=#{problemStatementQuestion}, " +
+            "     description=#{description}, currentStatusResolution=#{currentStatusResolution},             " +
+            "     contactId=#{contactId}, contactName=#{contactName}, priority=#{priority},                   " +
+            "     problemType=#{problemType}, problemSubType=#{problemSubType}, reason=#{reason},             " +
+            "     status=#{status}                                                                            ")
     public void upsertTicket(Ticket ticket);
-    // TODO: LastViewedDate temporarily removed
+
 
     @Insert("INSERT INTO sfdc_ticket_monitor.notification                  " +
-            "    (`CaseNumber`, `NotificationSent`)                        " +
+            "    (`caseNumber`, `notificationSent`)                        " +
             "VALUES                                                        " +
             "    (#{caseNumber}, #{notificationSent})                      " +
             "ON DUPLICATE KEY UPDATE notificationSent=#{notificationSent}  ")
     public void upsertNotification(Notification notification);
 
-
     @Select("SELECT                                           " +
-            "  ticket.CaseNumber,                             " +
-            "  ticket.AccountName,                            " +
-            "  ticket.AccountId,                              " +
-            "  ticket.ContactId,                              " +
-            "  ticket.Description,                            " +
-            "  ticket.Priority,                               " +
-            "  ticket.Problem_Type__c as ProblemType,         " +
-            "  ticket.Reason,                                 " +
-            "  ticket.Status                                  " +
+            "  ticket.caseNumber,                             " +
+            "  ticket.accountId,                              " +
+            "  ticket.accountName,                            " +
+            "  ticket.severity,                               " +
+            "  ticket.productComponent,                       " +
+            "  ticket.problemStatementQuestion,               " +
+            "  ticket.description,                            " +
+            "  ticket.currentStatusResolution,                " +
+            "  ticket.contactId,                              " +
+            "  ticket.contactName,                            " +
+            "  ticket.priority,                               " +
+            "  ticket.problemType,                            " +
+            "  ticket.problemSubType,                         " +
+            "  ticket.reason,                                 " +
+            "  ticket.status                                  " +
             "FROM sfdc_ticket_monitor.ticket                  " +
             "LEFT OUTER JOIN sfdc_ticket_monitor.notification " +
             "ON ticket.CaseNumber = notification.CaseNumber   " +
@@ -50,5 +62,32 @@ public interface DbMapper {
             "AND Status = 'Open'")
     public List<Ticket> getOpenUnnotifiedTickets();
 
+    @Insert("INSERT INTO sfdc_ticket_monitor.account            " +
+            "    (`accountId`, `accountName`)                   " +
+            "VALUES                                             " +
+            "    (#{accountId}, #{accountName})                 " +
+            "ON DUPLICATE KEY UPDATE accountName=#{accountName} ")
+    public void upsertAccount(Account account);
+
+    @Select("SELECT                            " +
+            "  accountId,                      " +
+            "  accountName                     " +
+            "FROM sfdc_ticket_monitor.account  " +
+            "WHERE accountId=#{accountId}      ")
+    public Account getAccountById(String accountId);
+
+    @Insert("INSERT INTO sfdc_ticket_monitor.contact            " +
+            "    (`contactId`, `contactName`)                   " +
+            "VALUES                                             " +
+            "    (#{contactId}, #{contactName})                 " +
+            "ON DUPLICATE KEY UPDATE contactName=#{contactName} ")
+    public void upsertContact(Contact contact);
+
+    @Select("SELECT                            " +
+            "  contactId,                      " +
+            "  contactName                     " +
+            "FROM sfdc_ticket_monitor.contact  " +
+            "WHERE contactId=#{contactId}      ")
+    public Contact getContactById(String contactId);
 
 }
