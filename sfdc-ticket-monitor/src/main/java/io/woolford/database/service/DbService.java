@@ -1,9 +1,6 @@
 package io.woolford.database.service;
 
-import io.woolford.database.entity.Account;
-import io.woolford.database.entity.Contact;
-import io.woolford.database.entity.Notification;
-import io.woolford.database.entity.Ticket;
+import io.woolford.database.entity.*;
 import io.woolford.database.mapper.DbMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +35,10 @@ public class DbService {
 
     public Contact getContactById(String contactId){
         return dbMapper.getContactById(contactId);
+    }
+
+    public List<SfdcTableColumn> getSfdcTableColumns(String tableName){
+        return dbMapper.getSfdcTableColumns(tableName);
     }
 
 }

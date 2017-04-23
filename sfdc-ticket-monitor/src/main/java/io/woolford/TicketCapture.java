@@ -9,10 +9,7 @@ import com.sforce.ws.ConnectorConfig;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
-import io.woolford.database.entity.Account;
-import io.woolford.database.entity.Contact;
-import io.woolford.database.entity.Notification;
-import io.woolford.database.entity.Ticket;
+import io.woolford.database.entity.*;
 import io.woolford.database.mapper.DbMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -62,16 +60,18 @@ public class TicketCapture {
     @Autowired
     DbMapper dbMapper;
 
-    static PartnerConnection connection;
+    private static PartnerConnection connection;
+
+    private Configuration ftlConfig = new Configuration(Configuration.VERSION_2_3_26);
+
+    TicketCapture(){
+        ftlConfig.setClassForTemplateLoading(TicketCapture.class, "/templates");
+        ftlConfig.setDefaultEncoding("UTF-8");
+    }
+
 
     @Scheduled(cron = "0 */20 * * * *")
     public void captureTickets() throws IOException, TemplateException {
-
-        // create Freemarker template config
-        Configuration ftlConfig = new Configuration(Configuration.VERSION_2_3_26);
-        ftlConfig.setClassForTemplateLoading(TicketCapture.class, "/templates");
-        ftlConfig.setDefaultEncoding("UTF-8");
-        Template ticketEmailTemplate = ftlConfig.getTemplate("ticket-email.ftl");
 
         // create connection to SFDC
         ConnectorConfig config = new ConnectorConfig();
@@ -95,7 +95,6 @@ public class TicketCapture {
         for (Ticket ticket : dbMapper.getOpenUnnotifiedTickets()){
 
             // TODO: ensure that null values are handled (notably severity and reason)
-
             // create a map of all the ticket attributes to be processed by the Freemarker template
             Map<String, String> map = new HashMap<>();
             map.put("accountName", ticket.getAccountName());
@@ -111,13 +110,12 @@ public class TicketCapture {
             map.put("status", ticket.getStatus());
 
             // render the Freemarker template
-            StringWriter stringWriter = new StringWriter();
-            ticketEmailTemplate.process(map, stringWriter);
-            String contentValue = stringWriter.toString();
+            Template ticketEmailTemplate = ftlConfig.getTemplate("ticket-email.ftl");
+            String emailContentValue = renderTemplate(ticketEmailTemplate, map);
 
             // email unnotified ticket
             String subject = "case " + ticket.getCaseNumber() + " opened by " + ticket.getAccountName();
-            sendMail(subject, contentValue);
+            sendMail(subject, emailContentValue);
             logger.info("Email sent: " + subject);
 
             // record notification as being sent to avoid duplicate emails
@@ -126,6 +124,14 @@ public class TicketCapture {
             notification.setNotificationSent(true);
             dbMapper.upsertNotification(notification);
         }
+    }
+
+    private String renderTemplate(Template template, Map map) throws IOException, TemplateException {
+
+        StringWriter stringWriter = new StringWriter();
+        template.process(map, stringWriter);
+        return stringWriter.toString();
+
     }
 
     // gets AccountId's for SE
@@ -150,7 +156,7 @@ public class TicketCapture {
     }
 
     // gets tickets for an account ID
-    private void getTickets(String accountId) {
+    private void getTickets(String accountId) throws IOException, TemplateException {
 
         QueryResult queryResults = null;
         try {
@@ -158,30 +164,33 @@ public class TicketCapture {
 
             String accountName = getAccountName(accountId);
 
-            queryResults = connection.query("SELECT casenumber, severity__c, current_status_resolution__c, " +
-                    "product_component__c, problem_statement_question__c, description, contactid, " +
-                    "priority, problem_type__c, problem_sub_type__c, reason, status FROM case WHERE accountId='" + accountId + "'");
+            List<SfdcTableColumn> sfdcTableColumnList = dbMapper.getSfdcTableColumns("case");
+            Map<String, Object> map = new HashMap<>();
+            map.put("sfdcTableColumnList", sfdcTableColumnList);
+            map.put("accountId", accountId);
+            Template sfdcCaseQueryTemplate = ftlConfig.getTemplate("sfdc-case-query.ftl");
+            String caseQuery = renderTemplate(sfdcCaseQueryTemplate, map);
+
+            queryResults = connection.query(caseQuery);
 
             if (queryResults.getSize() > 0) {
 
                 for (int i=0; i < queryResults.getRecords().length; i++) {
 
                     // TODO: the way of accessing the values from the query results looks pretty ugly/amateurish
+                    // perhaps use reflection to eliminate all the hard-coded literals.
 
                     Ticket ticket = new Ticket();
                     ticket.setCaseNumber(String.valueOf(queryResults.getRecords()[i].getChildren("CaseNumber").next().getValue()));
                     ticket.setAccountId(accountId);
                     ticket.setAccountName(accountName);
-
                     ticket.setSeverity(String.valueOf(queryResults.getRecords()[i].getChildren("Severity__c").next().getValue()));
-
                     ticket.setCurrentStatusResolution(String.valueOf(queryResults.getRecords()[i].getChildren("Current_Status_Resolution__c").next().getValue()));
                     ticket.setProductComponent(String.valueOf(queryResults.getRecords()[i].getChildren("Product_Component__c").next().getValue()));
                     ticket.setProblemStatementQuestion(String.valueOf(queryResults.getRecords()[i].getChildren("Problem_Statement_Question__c").next().getValue()));
                     ticket.setDescription(String.valueOf(queryResults.getRecords()[i].getChildren("Description").next().getValue()));
 
                     String contactId = String.valueOf(queryResults.getRecords()[i].getChildren("ContactId").next().getValue());
-
                     ticket.setContactId(contactId);
 
                     if (contactId != "null"){

@@ -1,9 +1,6 @@
 package io.woolford.database.mapper;
 
-import io.woolford.database.entity.Account;
-import io.woolford.database.entity.Contact;
-import io.woolford.database.entity.Notification;
-import io.woolford.database.entity.Ticket;
+import io.woolford.database.entity.*;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Component;
@@ -89,5 +86,12 @@ public interface DbMapper {
             "FROM sfdc_ticket_monitor.contact  " +
             "WHERE contactId=#{contactId}      ")
     public Contact getContactById(String contactId);
+
+    @Select("SELECT                                     " +
+            "  TableName,                               " +
+            "  ColumnName                               " +
+            "FROM sfdc_ticket_monitor.sfdc_table_column " +
+            "WHERE TableName=#{tableName}               ")
+    public List<SfdcTableColumn> getSfdcTableColumns(String tableName);
 
 }
