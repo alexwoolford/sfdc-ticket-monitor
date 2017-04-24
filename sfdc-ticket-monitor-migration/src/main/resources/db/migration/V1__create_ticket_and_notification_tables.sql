@@ -4,6 +4,7 @@ USE sfdc_ticket_monitor;
 CREATE TABLE ticket (
   CaseNumber VARCHAR(20),
   PRIMARY KEY (CaseNumber),
+  Id VARCHAR(20),
   AccountId VARCHAR(20),
   AccountName VARCHAR(100),
   Severity VARCHAR(100),

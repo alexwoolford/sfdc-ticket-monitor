@@ -12,15 +12,15 @@ import java.util.List;
 public interface DbMapper {
 
     @Insert("INSERT INTO sfdc_ticket_monitor.ticket                                                           " +
-            "    (`accountId`, `accountName`, `caseNumber`, `severity`, `productComponent`,                   " +
+            "    (`accountId`, `accountName`, `caseNumber`, `id`, `severity`, `productComponent`,             " +
             "     `problemStatementQuestion`, `description`, `currentStatusResolution`, `contactId`,          " +
             "     `contactName`, `priority`, `problemType`, `problemSubType`, `reason`, `status`)             " +
             "VALUES                                                                                           " +
-            "    (#{accountId}, #{accountName}, #{caseNumber}, #{severity}, #{productComponent},              " +
+            "    (#{accountId}, #{accountName}, #{caseNumber}, #{id}, #{severity}, #{productComponent},       " +
             "     #{problemStatementQuestion}, #{description}, #{currentStatusResolution}, #{contactId},      " +
             "     #{contactName}, #{priority}, #{problemType}, #{problemSubType}, #{reason}, #{status})       " +
             "ON DUPLICATE KEY UPDATE                                                                          " +
-            "     accountId=#{accountId}, accountName=#{accountName}, severity=#{severity},                   " +
+            "     accountId=#{accountId}, accountName=#{accountName}, id=#{id}, severity=#{severity},         " +
             "     productComponent=#{productComponent}, problemStatementQuestion=#{problemStatementQuestion}, " +
             "     description=#{description}, currentStatusResolution=#{currentStatusResolution},             " +
             "     contactId=#{contactId}, contactName=#{contactName}, priority=#{priority},                   " +
@@ -38,6 +38,7 @@ public interface DbMapper {
 
     @Select("SELECT                                           " +
             "  ticket.caseNumber,                             " +
+            "  ticket.id,                                     " +
             "  ticket.accountId,                              " +
             "  ticket.accountName,                            " +
             "  ticket.severity,                               " +

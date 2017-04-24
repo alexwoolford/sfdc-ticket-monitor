@@ -2,7 +2,7 @@
     <#if sev_string?contains("S1")>
         <#return "#e34a33" />
     <#elseif sev_string?contains("S2")>
-            <#return "#fdbb84" />
+        <#return "#fdbb84" />
     <#elseif sev_string?contains("S3")>
         <#return "#fee8c8" />
     <#elseif sev_string?contains("S4")>
@@ -41,7 +41,7 @@
     </tr>
     <tr>
         <td>Case Number</td>
-        <td>${(caseNumber)!}</td>
+        <td><a href="https://hortonworks.my.salesforce.com/${(id)!}?nooverride=1">${(caseNumber)!}</a></td>
     </tr>
     <tr>
         <td>Severity</td>

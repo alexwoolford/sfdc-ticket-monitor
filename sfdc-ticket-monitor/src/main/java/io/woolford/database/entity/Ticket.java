@@ -5,6 +5,7 @@ public class Ticket {
     private String accountId;
     private String accountName;
     private String caseNumber;
+    private String id;
     private String severity;
     private String currentStatusResolution;
     private String productComponent;
@@ -40,6 +41,14 @@ public class Ticket {
 
     public void setCaseNumber(String caseNumber) {
         this.caseNumber = caseNumber;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getSeverity() {
@@ -144,6 +153,7 @@ public class Ticket {
                 "accountId='" + accountId + '\'' +
                 ", accountName='" + accountName + '\'' +
                 ", caseNumber='" + caseNumber + '\'' +
+                ", id='" + id + '\'' +
                 ", severity='" + severity + '\'' +
                 ", currentStatusResolution='" + currentStatusResolution + '\'' +
                 ", productComponent='" + productComponent + '\'' +

@@ -92,11 +92,11 @@ public class TicketCapture {
         // notify user of any new tickets
         for (Ticket ticket : dbMapper.getOpenUnnotifiedTickets()){
 
-            // TODO: ensure that null values are handled (notably severity and reason)
             // create a map of all the ticket attributes to be processed by the Freemarker template
             Map<String, String> map = new HashMap<>();
             map.put("accountName", ticket.getAccountName());
             map.put("caseNumber", ticket.getCaseNumber());
+            map.put("id", ticket.getId());
             map.put("severity", ticket.getSeverity());
             map.put("currentStatusResolution", ticket.getCurrentStatusResolution());
             map.put("productComponent", ticket.getProductComponent());
@@ -110,6 +110,8 @@ public class TicketCapture {
             // render the Freemarker template
             Template ticketEmailTemplate = ftlConfig.getTemplate("ticket-email.ftl");
             String emailContentValue = renderTemplate(ticketEmailTemplate, map);
+
+            logger.info(emailContentValue);
 
             // email unnotified ticket
             String subject = "case " + ticket.getCaseNumber() + " opened by " + ticket.getAccountName();
@@ -180,6 +182,7 @@ public class TicketCapture {
 
                     Ticket ticket = new Ticket();
                     ticket.setCaseNumber(String.valueOf(queryResults.getRecords()[i].getChildren("CaseNumber").next().getValue()));
+                    ticket.setId(String.valueOf(queryResults.getRecords()[i].getChildren("Id").next().getValue()));
                     ticket.setAccountId(accountId);
                     ticket.setAccountName(accountName);
                     ticket.setSeverity(String.valueOf(queryResults.getRecords()[i].getChildren("Severity__c").next().getValue()));
@@ -193,7 +196,6 @@ public class TicketCapture {
 
                     if (contactId != "null"){
                         String contactName = getContactName(contactId);
-                        logger.info("contactName: " + contactName);
                         ticket.setContactName(contactName);
                     }
 
@@ -204,7 +206,7 @@ public class TicketCapture {
                     ticket.setStatus(String.valueOf(queryResults.getRecords()[i].getChildren("Status").next().getValue()));
 
                     dbMapper.upsertTicket(ticket);
-                    logger.info("Upserted ticket " + ticket.getCaseNumber() + " for " + ticket.getAccountName() + " to MySQL");
+                    logger.info("Upserted ticket " + ticket.getCaseNumber() + " for " + ticket.getAccountName());
                 }
             }
 
