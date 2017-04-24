@@ -111,8 +111,6 @@ public class TicketCapture {
             Template ticketEmailTemplate = ftlConfig.getTemplate("ticket-email.ftl");
             String emailContentValue = renderTemplate(ticketEmailTemplate, map);
 
-            logger.info(emailContentValue);
-
             // email unnotified ticket
             String subject = "case " + ticket.getCaseNumber() + " opened by " + ticket.getAccountName();
             sendMail(subject, emailContentValue);
