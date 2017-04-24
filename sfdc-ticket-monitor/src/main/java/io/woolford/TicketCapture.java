@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -68,7 +67,6 @@ public class TicketCapture {
         ftlConfig.setClassForTemplateLoading(TicketCapture.class, "/templates");
         ftlConfig.setDefaultEncoding("UTF-8");
     }
-
 
     @Scheduled(cron = "0 */20 * * * *")
     public void captureTickets() throws IOException, TemplateException {

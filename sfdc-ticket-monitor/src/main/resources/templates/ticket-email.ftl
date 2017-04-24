@@ -1,7 +1,22 @@
+<#function sev_color sev_string="">
+    <#if sev_string?contains("S1")>
+        <#return "#e34a33" />
+    <#elseif sev_string?contains("S2")>
+            <#return "#fdbb84" />
+    <#elseif sev_string?contains("S3")>
+        <#return "#fee8c8" />
+    <#elseif sev_string?contains("S4")>
+        <#return "#a1d99b" />
+    <#else>
+        <#return "#ffffff" />
+    </#if>
+</#function>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>SFDC ticket</title>
+    <title>SFDC ticket ${(caseNumber)!} opened by ${(contactName)!}</title>
     <style>
         table, th, td {
             border: 1px solid black;
@@ -16,7 +31,7 @@
 <body>
 
 <table style="width:100%">
-    <tr>
+    <tr bgcolor="#D1D1D1">
         <th>attribute</th>
         <th>value</th>
     </tr>
@@ -30,7 +45,7 @@
     </tr>
     <tr>
         <td>Severity</td>
-        <td>${(severity)!}</td>
+        <td bgcolor=${sev_color(severity)}>${(severity)!}</td>
     </tr>
     <tr>
         <td>Current Status Resolution</td>
