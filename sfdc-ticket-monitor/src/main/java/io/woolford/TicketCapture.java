@@ -27,6 +27,7 @@ class TicketCapture {
 
     // TODO: add logging throughout
     // TODO: add cache hit stats
+    // TODO: prevent multiple concurrent runs
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${sfdc.name}")
@@ -67,8 +68,12 @@ class TicketCapture {
         this.dbMapper = dbMapper;
     }
 
+    private static RunStats runStats = new RunStats();
+
     @Scheduled(cron = "0 */20 * * * *")
     public void captureTickets() throws IOException, TemplateException {
+
+        runStats.initialize();
 
         // create connection to SFDC
         ConnectorConfig config = new ConnectorConfig();
@@ -80,6 +85,7 @@ class TicketCapture {
             logger.info("Created connection to SFDC");
         } catch (ConnectionException e) {
             logger.error(e.toString());
+            runStats.incrementExceptions();
         }
 
         // update the status of all the tickets
@@ -114,13 +120,19 @@ class TicketCapture {
             String subject = "case " + ticket.getCaseNumber() + " opened by " + ticket.getAccountName();
             sendMail(subject, emailContentValue);
             logger.info("Email sent: " + subject);
+            runStats.incrementEmails();
 
             // record notification as being sent to avoid duplicate emails
             Notification notification = new Notification();
             notification.setCaseNumber(ticket.getCaseNumber());
             notification.setNotificationSent();
             dbMapper.upsertNotification(notification);
+
         }
+
+        runStats.setEndRun();
+        dbMapper.insertRunStats(runStats);
+
     }
 
     private String renderTemplate(Template template, Map map) throws IOException, TemplateException {
@@ -139,6 +151,7 @@ class TicketCapture {
         try {
             // get the list of account ID's for SE
             queryResults = connection.query("SELECT accountid FROM opportunity WHERE opportunity.lead_se__c = '" + sfdcName + "'");
+            runStats.incrementSfdcQueries();
             if (queryResults.getSize() > 0) {
                 for (int i=0; i < queryResults.getRecords().length; i++) {
                     String accountId = String.valueOf(queryResults.getRecords()[i].getChildren("AccountId").next().getValue());
@@ -147,6 +160,7 @@ class TicketCapture {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            runStats.incrementExceptions();
         }
         logger.info("got list of account ID's for " + sfdcName + ": " + accountIdList);
         return accountIdList;
@@ -169,6 +183,7 @@ class TicketCapture {
             String caseQuery = renderTemplate(sfdcCaseQueryTemplate, map);
 
             queryResults = connection.query(caseQuery);
+            runStats.incrementSfdcQueries();
 
             if (queryResults.getSize() > 0) {
 
@@ -209,6 +224,7 @@ class TicketCapture {
 
         } catch (ConnectionException e) {
             e.printStackTrace();
+            runStats.incrementExceptions();
         }
     }
 
@@ -220,9 +236,10 @@ class TicketCapture {
             QueryResult queryResults = null;
             try {
                 queryResults = connection.query("SELECT name FROM contact WHERE id='" + contactId + "'");
-                logger.info("contact " + contactId + " retrieved from SFDC");
+                runStats.incrementSfdcQueries();
             } catch (ConnectionException e) {
                 e.printStackTrace();
+                runStats.incrementExceptions();
             }
             contactName = String.valueOf(queryResults.getRecords()[0].getChildren("Name").next().getValue());
             contact.setContactId(contactId);
@@ -230,6 +247,7 @@ class TicketCapture {
             dbMapper.upsertContact(contact);
         } else {
             contactName = dbMapper.getContactById(contactId).getContactName();
+            runStats.incrementCacheHits();
         }
         return contactName;
     }
@@ -242,8 +260,10 @@ class TicketCapture {
             QueryResult queryResults = null;
             try {
                 queryResults = connection.query("SELECT name FROM account WHERE id='" + accountId + "'");
+                runStats.incrementSfdcQueries();
             } catch (ConnectionException e) {
                 e.printStackTrace();
+                runStats.incrementExceptions();
             }
             accountName = String.valueOf(queryResults.getRecords()[0].getChildren("Name").next().getValue());
             account.setAccountId(accountId);
@@ -252,6 +272,7 @@ class TicketCapture {
             logger.info("account " + accountId + " retrieved from MySQL");
         } else {
             accountName = dbMapper.getAccountById(accountId).getAccountName();
+            runStats.incrementCacheHits();
         }
         return accountName;
     }

@@ -95,4 +95,10 @@ public interface DbMapper {
             "WHERE TableName=#{tableName}               ")
     List<SfdcTableColumn> getSfdcTableColumns(String tableName);
 
+    @Insert("INSERT INTO sfdc_ticket_monitor.run_stats                                            " +
+            "    (`startRun`, `endRun`, `sfdcQueries`, `cacheHits`, `exceptions`, `emails`)       " +
+            "VALUES                                                                               " +
+            "    (#{startRun}, #{endRun}, #{sfdcQueries}, #{cacheHits}, #{exceptions}, #{emails}) ")
+    void insertRunStats(RunStats runStats);
+
 }

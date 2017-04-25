@@ -45,4 +45,8 @@ class DbService {
         return dbMapper.getSfdcTableColumns(tableName);
     }
 
+    public void  insertRunStats(RunStats runStats){
+        dbMapper.insertRunStats(runStats);
+    }
+
 }
