@@ -20,13 +20,10 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
-public class TicketCapture {
+class TicketCapture {
 
     // TODO: add logging throughout
     // TODO: add cache hit stats
@@ -56,16 +53,18 @@ public class TicketCapture {
     @Value("${sendgrid.to}")
     private String sendgridTo;
 
-    @Autowired
+    private final
     DbMapper dbMapper;
 
     private static PartnerConnection connection;
 
-    private Configuration ftlConfig = new Configuration(Configuration.VERSION_2_3_26);
+    private final Configuration ftlConfig = new Configuration(Configuration.VERSION_2_3_26);
 
-    TicketCapture(){
+    @Autowired
+    private TicketCapture(DbMapper dbMapper){
         ftlConfig.setClassForTemplateLoading(TicketCapture.class, "/templates");
         ftlConfig.setDefaultEncoding("UTF-8");
+        this.dbMapper = dbMapper;
     }
 
     @Scheduled(cron = "0 */20 * * * *")
@@ -119,7 +118,7 @@ public class TicketCapture {
             // record notification as being sent to avoid duplicate emails
             Notification notification = new Notification();
             notification.setCaseNumber(ticket.getCaseNumber());
-            notification.setNotificationSent(true);
+            notification.setNotificationSent();
             dbMapper.upsertNotification(notification);
         }
     }
@@ -135,8 +134,8 @@ public class TicketCapture {
     // gets AccountId's for SE
     private List<String> getAccountIds(String sfdcName) {
 
-        List<String> accountIdList = new ArrayList<String>();
-        QueryResult queryResults = null;
+        List<String> accountIdList = new ArrayList<>();
+        QueryResult queryResults;
         try {
             // get the list of account ID's for SE
             queryResults = connection.query("SELECT accountid FROM opportunity WHERE opportunity.lead_se__c = '" + sfdcName + "'");
@@ -156,7 +155,7 @@ public class TicketCapture {
     // gets tickets for an account ID
     private void getTickets(String accountId) throws IOException, TemplateException {
 
-        QueryResult queryResults = null;
+        QueryResult queryResults;
         try {
             // TODO: consider using Freemarker templates to generate all the SFDC queries
 
@@ -192,7 +191,7 @@ public class TicketCapture {
                     String contactId = String.valueOf(queryResults.getRecords()[i].getChildren("ContactId").next().getValue());
                     ticket.setContactId(contactId);
 
-                    if (contactId != "null"){
+                    if (!Objects.equals(contactId, "null")){
                         String contactName = getContactName(contactId);
                         ticket.setContactName(contactName);
                     }
@@ -216,7 +215,7 @@ public class TicketCapture {
     private String getContactName(String contactId){
 
         Contact contact = new Contact();
-        String contactName = null;
+        String contactName;
         if (dbMapper.getContactById(contactId) == null){
             QueryResult queryResults = null;
             try {
@@ -238,7 +237,7 @@ public class TicketCapture {
     private String getAccountName(String accountId){
 
         Account account = new Account();
-        String accountName = null;
+        String accountName;
         if (dbMapper.getAccountById(accountId) == null){
             QueryResult queryResults = null;
             try {
@@ -265,15 +264,11 @@ public class TicketCapture {
 
         SendGrid sg = new SendGrid(sendgridApiKey);
         Request request = new Request();
-        try {
-            request.method = Method.POST;
-            request.endpoint = "mail/send";
-            request.body = mail.build();
-            Response response = sg.api(request);
-            // TODO: check that email was sent successfully
-        } catch (IOException ex) {
-            throw ex;
-        }
+        request.method = Method.POST;
+        request.endpoint = "mail/send";
+        request.body = mail.build();
+        Response response = sg.api(request);
+        // TODO: check that email was sent successfully
         logger.info("Email: " + subject + " sent");
     }
 

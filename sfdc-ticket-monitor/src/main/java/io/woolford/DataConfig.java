@@ -13,7 +13,7 @@ import java.sql.SQLException;
 
 @Configuration
 @MapperScan("io.woolford.database.mapper")
-public class DataConfig {
+class DataConfig {
 
     @Value("${mysql.host}")
     private String mysqlHost;

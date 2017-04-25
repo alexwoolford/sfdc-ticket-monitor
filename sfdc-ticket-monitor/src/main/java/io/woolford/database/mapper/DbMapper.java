@@ -26,7 +26,7 @@ public interface DbMapper {
             "     contactId=#{contactId}, contactName=#{contactName}, priority=#{priority},                   " +
             "     problemType=#{problemType}, problemSubType=#{problemSubType}, reason=#{reason},             " +
             "     status=#{status}                                                                            ")
-    public void upsertTicket(Ticket ticket);
+    void upsertTicket(Ticket ticket);
 
 
     @Insert("INSERT INTO sfdc_ticket_monitor.notification                  " +
@@ -34,7 +34,7 @@ public interface DbMapper {
             "VALUES                                                        " +
             "    (#{caseNumber}, #{notificationSent})                      " +
             "ON DUPLICATE KEY UPDATE notificationSent=#{notificationSent}  ")
-    public void upsertNotification(Notification notification);
+    void upsertNotification(Notification notification);
 
     @Select("SELECT                                           " +
             "  ticket.caseNumber,                             " +
@@ -58,41 +58,41 @@ public interface DbMapper {
             "ON ticket.CaseNumber = notification.CaseNumber   " +
             "WHERE notification.CaseNumber IS NULL            " +
             "AND Status = 'Open'")
-    public List<Ticket> getOpenUnnotifiedTickets();
+    List<Ticket> getOpenUnnotifiedTickets();
 
     @Insert("INSERT INTO sfdc_ticket_monitor.account            " +
             "    (`accountId`, `accountName`)                   " +
             "VALUES                                             " +
             "    (#{accountId}, #{accountName})                 " +
             "ON DUPLICATE KEY UPDATE accountName=#{accountName} ")
-    public void upsertAccount(Account account);
+    void upsertAccount(Account account);
 
     @Select("SELECT                            " +
             "  accountId,                      " +
             "  accountName                     " +
             "FROM sfdc_ticket_monitor.account  " +
             "WHERE accountId=#{accountId}      ")
-    public Account getAccountById(String accountId);
+    Account getAccountById(String accountId);
 
     @Insert("INSERT INTO sfdc_ticket_monitor.contact            " +
             "    (`contactId`, `contactName`)                   " +
             "VALUES                                             " +
             "    (#{contactId}, #{contactName})                 " +
             "ON DUPLICATE KEY UPDATE contactName=#{contactName} ")
-    public void upsertContact(Contact contact);
+    void upsertContact(Contact contact);
 
     @Select("SELECT                            " +
             "  contactId,                      " +
             "  contactName                     " +
             "FROM sfdc_ticket_monitor.contact  " +
             "WHERE contactId=#{contactId}      ")
-    public Contact getContactById(String contactId);
+    Contact getContactById(String contactId);
 
     @Select("SELECT                                     " +
             "  TableName,                               " +
             "  ColumnName                               " +
             "FROM sfdc_ticket_monitor.sfdc_table_column " +
             "WHERE TableName=#{tableName}               ")
-    public List<SfdcTableColumn> getSfdcTableColumns(String tableName);
+    List<SfdcTableColumn> getSfdcTableColumns(String tableName);
 
 }

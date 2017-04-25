@@ -17,8 +17,8 @@ public class Notification {
         return notificationSent;
     }
 
-    public void setNotificationSent(Boolean notificationSent) {
-        this.notificationSent = notificationSent;
+    public void setNotificationSent() {
+        this.notificationSent = true;
     }
 
     @Override

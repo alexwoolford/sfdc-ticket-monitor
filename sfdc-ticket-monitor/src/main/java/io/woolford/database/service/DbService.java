@@ -8,10 +8,14 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class DbService {
+class DbService {
+
+    private final DbMapper dbMapper;
 
     @Autowired
-    private DbMapper dbMapper;
+    public DbService(DbMapper dbMapper) {
+        this.dbMapper = dbMapper;
+    }
 
     public void upsertTicket(Ticket ticket){
         dbMapper.upsertTicket(ticket);
