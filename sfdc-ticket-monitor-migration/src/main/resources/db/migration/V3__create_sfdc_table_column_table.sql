@@ -6,6 +6,7 @@ CREATE TABLE sfdc_table_column (
 
 INSERT INTO sfdc_table_column (TableName, ColumnName) VALUES ('case', 'casenumber');
 INSERT INTO sfdc_table_column (TableName, ColumnName) VALUES ('case', 'id');
+INSERT INTO sfdc_table_column (TableName, ColumnName) VALUES ('case', 'accountid');
 INSERT INTO sfdc_table_column (TableName, ColumnName) VALUES ('case', 'severity__c');
 INSERT INTO sfdc_table_column (TableName, ColumnName) VALUES ('case', 'current_status_resolution__c');
 INSERT INTO sfdc_table_column (TableName, ColumnName) VALUES ('case', 'product_component__c');

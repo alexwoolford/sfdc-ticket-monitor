@@ -26,8 +26,9 @@ import java.util.*;
 class TicketCapture {
 
     // TODO: add logging throughout
-    // TODO: add cache hit stats
     // TODO: prevent multiple concurrent runs
+    // TODO: add basic healthcheck RESTful endpoint
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${sfdc.name}")
@@ -89,10 +90,9 @@ class TicketCapture {
         }
 
         // update the status of all the tickets
-        for (String accountId : getAccountIds(sfdcName)){
-            getTickets(accountId);
-            logger.info("Persisted tickets for accountId: " + accountId + " to MySQL");
-        }
+        List<String> accountIdList = getAccountIds(sfdcName);
+        getTickets(accountIdList);
+        logger.info("Upserted tickets for account IDs " + accountIdList.toString());
 
         // notify user of any new tickets
         for (Ticket ticket : dbMapper.getOpenUnnotifiedTickets()){
@@ -162,23 +162,22 @@ class TicketCapture {
             e.printStackTrace();
             runStats.incrementExceptions();
         }
-        logger.info("got list of account ID's for " + sfdcName + ": " + accountIdList);
+        logger.info("Got list of account ID's for " + sfdcName + ": " + accountIdList);
         return accountIdList;
     }
 
+
     // gets tickets for an account ID
-    private void getTickets(String accountId) throws IOException, TemplateException {
+    private void getTickets(List<String> accountIdList) throws IOException, TemplateException {
 
         QueryResult queryResults;
         try {
             // TODO: consider using Freemarker templates to generate all the SFDC queries
 
-            String accountName = getAccountName(accountId);
-
             List<SfdcTableColumn> sfdcTableColumnList = dbMapper.getSfdcTableColumns("case");
             Map<String, Object> map = new HashMap<>();
             map.put("sfdcTableColumnList", sfdcTableColumnList);
-            map.put("accountId", accountId);
+            map.put("accountIdList", accountIdList);
             Template sfdcCaseQueryTemplate = ftlConfig.getTemplate("sfdc-case-query.ftl");
             String caseQuery = renderTemplate(sfdcCaseQueryTemplate, map);
 
@@ -193,8 +192,13 @@ class TicketCapture {
                     // perhaps use reflection to eliminate all the hard-coded literals.
 
                     Ticket ticket = new Ticket();
+
                     ticket.setCaseNumber(String.valueOf(queryResults.getRecords()[i].getChildren("CaseNumber").next().getValue()));
                     ticket.setId(String.valueOf(queryResults.getRecords()[i].getChildren("Id").next().getValue()));
+
+                    String accountId = String.valueOf(queryResults.getRecords()[i].getChildren("AccountId").next().getValue());
+                    String accountName = getAccountName(accountId);
+
                     ticket.setAccountId(accountId);
                     ticket.setAccountName(accountName);
                     ticket.setSeverity(String.valueOf(queryResults.getRecords()[i].getChildren("Severity__c").next().getValue()));
