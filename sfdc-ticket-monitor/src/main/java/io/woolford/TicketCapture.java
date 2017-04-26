@@ -68,7 +68,7 @@ class TicketCapture {
         this.dbMapper = dbMapper;
     }
 
-    private static RunStats runStats = new RunStats();
+    private static final RunStats runStats = new RunStats();
 
     @Scheduled(cron = "0 */20 * * * *")
     public void captureTickets() throws IOException, TemplateException {

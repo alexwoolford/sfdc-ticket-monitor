@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-class Application {
+public class Application {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
