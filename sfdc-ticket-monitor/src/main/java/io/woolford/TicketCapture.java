@@ -1,11 +1,14 @@
 package io.woolford;
 
+import com.google.common.base.CaseFormat;
 import com.sendgrid.*;
 import com.sforce.soap.partner.Connector;
 import com.sforce.soap.partner.PartnerConnection;
 import com.sforce.soap.partner.QueryResult;
+import com.sforce.soap.partner.sobject.SObject;
 import com.sforce.ws.ConnectionException;
 import com.sforce.ws.ConnectorConfig;
+import com.sforce.ws.bind.XmlObject;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -167,7 +170,7 @@ class TicketCapture {
     }
 
 
-    // gets tickets for an account ID
+    // gets tickets for list of accounts
     private void getTickets(List<String> accountIdList) throws IOException, TemplateException {
 
         QueryResult queryResults;
@@ -184,46 +187,45 @@ class TicketCapture {
             queryResults = connection.query(caseQuery);
             runStats.incrementSfdcQueries();
 
-            if (queryResults.getSize() > 0) {
+            // iterate over case (ticket) records
+            SObject[] sObjects = queryResults.getRecords();
+            for (SObject sObject : sObjects){
 
-                for (int i=0; i < queryResults.getRecords().length; i++) {
+                // create an attribute/value map for each record
+                Map<String, String> recordMap = new HashMap<>();
 
-                    // TODO: the way of accessing the values from the query results looks pretty ugly/amateurish
-                    // perhaps use reflection to eliminate all the hard-coded literals.
+                // iterate over XML returned by SFDC and append attribute name/value to record map
+                Iterator<XmlObject> xmlObjectsIterator = sObject.getChildren();
+                while (xmlObjectsIterator.hasNext()){
 
-                    Ticket ticket = new Ticket();
+                    XmlObject xmlObject = xmlObjectsIterator.next();
 
-                    ticket.setCaseNumber(String.valueOf(queryResults.getRecords()[i].getChildren("CaseNumber").next().getValue()));
-                    ticket.setId(String.valueOf(queryResults.getRecords()[i].getChildren("Id").next().getValue()));
+                    // clean up the attribute names so they match MySQL naming convention
+                    String name = xmlObject.getName().getLocalPart().replace("__c", "");
+                    name = CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, name); // attribute name
 
-                    String accountId = String.valueOf(queryResults.getRecords()[i].getChildren("AccountId").next().getValue());
-                    String accountName = getAccountName(accountId);
+                    Object value = xmlObject.getValue();
 
-                    ticket.setAccountId(accountId);
-                    ticket.setAccountName(accountName);
-                    ticket.setSeverity(String.valueOf(queryResults.getRecords()[i].getChildren("Severity__c").next().getValue()));
-                    ticket.setCurrentStatusResolution(String.valueOf(queryResults.getRecords()[i].getChildren("Current_Status_Resolution__c").next().getValue()));
-                    ticket.setProductComponent(String.valueOf(queryResults.getRecords()[i].getChildren("Product_Component__c").next().getValue()));
-                    ticket.setProblemStatementQuestion(String.valueOf(queryResults.getRecords()[i].getChildren("Problem_Statement_Question__c").next().getValue()));
-                    ticket.setDescription(String.valueOf(queryResults.getRecords()[i].getChildren("Description").next().getValue()));
-
-                    String contactId = String.valueOf(queryResults.getRecords()[i].getChildren("ContactId").next().getValue());
-                    ticket.setContactId(contactId);
-
-                    if (!Objects.equals(contactId, "null")){
-                        String contactName = getContactName(contactId);
-                        ticket.setContactName(contactName);
+                    String valueString;                                                  // attribute value
+                    if (value != null){
+                        valueString = value.toString();
+                    } else {
+                        valueString = "";
                     }
 
-                    ticket.setPriority(String.valueOf(queryResults.getRecords()[i].getChildren("Priority").next().getValue()));
-                    ticket.setProblemType(String.valueOf(queryResults.getRecords()[i].getChildren("Problem_Type__c").next().getValue()));
-                    ticket.setProblemSubType(String.valueOf(queryResults.getRecords()[i].getChildren("Problem_Sub_Type__c").next().getValue()));
-                    ticket.setReason(String.valueOf(queryResults.getRecords()[i].getChildren("Reason").next().getValue()));
-                    ticket.setStatus(String.valueOf(queryResults.getRecords()[i].getChildren("Status").next().getValue()));
-
-                    dbMapper.upsertTicket(ticket);
-                    logger.info("Upserted ticket " + ticket.getCaseNumber() + " for " + ticket.getAccountName());
+                    if (!name.equals("type")){
+                        recordMap.put(name, valueString);
+                    }
                 }
+
+                // lookup account name and contact name from ID's
+                recordMap.put("accountname", getAccountName(recordMap.get("accountid")));
+                recordMap.put("contactname", getContactName(recordMap.get("contactid")));
+
+                // upsert ticket
+                dbMapper.upsertTicket(recordMap);
+                logger.info("Upserted ticket " + recordMap.get("casenumber") + " for " + recordMap.get("accountname"));
+
             }
 
         } catch (ConnectionException e) {
@@ -236,7 +238,9 @@ class TicketCapture {
 
         Contact contact = new Contact();
         String contactName;
-        if (dbMapper.getContactById(contactId) == null){
+        if (contactId.length() == 0){
+            contactName = "";
+        } else if (dbMapper.getContactById(contactId) == null){
             QueryResult queryResults = null;
             try {
                 queryResults = connection.query("SELECT name FROM contact WHERE id='" + contactId + "'");
@@ -249,6 +253,7 @@ class TicketCapture {
             contact.setContactId(contactId);
             contact.setContactName(contactName);
             dbMapper.upsertContact(contact);
+            logger.info("ContactId: " + contactId + "; contactName: " + contactName + " retrieved from SFDC");
         } else {
             contactName = dbMapper.getContactById(contactId).getContactName();
             runStats.incrementCacheHits();
@@ -260,7 +265,9 @@ class TicketCapture {
 
         Account account = new Account();
         String accountName;
-        if (dbMapper.getAccountById(accountId) == null){
+        if (accountId.length() == 0){
+            accountName = "";
+        } else if (dbMapper.getAccountById(accountId) == null){
             QueryResult queryResults = null;
             try {
                 queryResults = connection.query("SELECT name FROM account WHERE id='" + accountId + "'");
@@ -273,7 +280,7 @@ class TicketCapture {
             account.setAccountId(accountId);
             account.setAccountName(accountName);
             dbMapper.upsertAccount(account);
-            logger.info("account " + accountId + " retrieved from MySQL");
+            logger.info("AccountId: " + accountId + "; accountName: " + accountName + " retrieved from SFDC");
         } else {
             accountName = dbMapper.getAccountById(accountId).getAccountName();
             runStats.incrementCacheHits();

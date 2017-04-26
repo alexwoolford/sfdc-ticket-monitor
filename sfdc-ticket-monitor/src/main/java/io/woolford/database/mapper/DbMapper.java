@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 
 @Component
@@ -16,18 +17,17 @@ public interface DbMapper {
             "     `problemStatementQuestion`, `description`, `currentStatusResolution`, `contactId`,          " +
             "     `contactName`, `priority`, `problemType`, `problemSubType`, `reason`, `status`)             " +
             "VALUES                                                                                           " +
-            "    (#{accountId}, #{accountName}, #{caseNumber}, #{id}, #{severity}, #{productComponent},       " +
+            "    (#{accountId}, #{accountName}, #{casenumber}, #{id}, #{severity}, #{productComponent},       " +
             "     #{problemStatementQuestion}, #{description}, #{currentStatusResolution}, #{contactId},      " +
             "     #{contactName}, #{priority}, #{problemType}, #{problemSubType}, #{reason}, #{status})       " +
             "ON DUPLICATE KEY UPDATE                                                                          " +
-            "     accountId=#{accountId}, accountName=#{accountName}, id=#{id}, severity=#{severity},         " +
+            "     accountId=#{accountid}, accountName=#{accountname}, id=#{id}, severity=#{severity},         " +
             "     productComponent=#{productComponent}, problemStatementQuestion=#{problemStatementQuestion}, " +
             "     description=#{description}, currentStatusResolution=#{currentStatusResolution},             " +
-            "     contactId=#{contactId}, contactName=#{contactName}, priority=#{priority},                   " +
+            "     contactId=#{contactid}, contactName=#{contactname}, priority=#{priority},                   " +
             "     problemType=#{problemType}, problemSubType=#{problemSubType}, reason=#{reason},             " +
             "     status=#{status}                                                                            ")
-    void upsertTicket(Ticket ticket);
-
+    void upsertTicket(Map ticket);
 
     @Insert("INSERT INTO sfdc_ticket_monitor.notification                  " +
             "    (`caseNumber`, `notificationSent`)                        " +

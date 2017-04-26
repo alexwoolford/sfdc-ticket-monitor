@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 class DbService {
@@ -17,7 +18,11 @@ class DbService {
         this.dbMapper = dbMapper;
     }
 
-    public void upsertTicket(Ticket ticket){
+//    public void upsertTicket(Ticket ticket){
+//        dbMapper.upsertTicket(ticket);
+//    }
+
+    public void upsertTicket(Map ticket){
         dbMapper.upsertTicket(ticket);
     }
 
