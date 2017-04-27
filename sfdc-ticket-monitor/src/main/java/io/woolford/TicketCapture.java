@@ -31,6 +31,8 @@ class TicketCapture {
     // TODO: add logging throughout
     // TODO: prevent multiple concurrent runs
     // TODO: add basic healthcheck RESTful endpoint
+    // TODO: get rid of Ticket POJO and use map instead
+    // TODO: http page that displays all the current open tickets
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

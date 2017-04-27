@@ -17,9 +17,9 @@ public interface DbMapper {
             "     `problemStatementQuestion`, `description`, `currentStatusResolution`, `contactId`,          " +
             "     `contactName`, `priority`, `problemType`, `problemSubType`, `reason`, `status`)             " +
             "VALUES                                                                                           " +
-            "    (#{accountId}, #{accountName}, #{casenumber}, #{id}, #{severity}, #{productComponent},       " +
+            "    (#{accountid}, #{accountname}, #{casenumber}, #{id}, #{severity}, #{productComponent},       " +
             "     #{problemStatementQuestion}, #{description}, #{currentStatusResolution}, #{contactId},      " +
-            "     #{contactName}, #{priority}, #{problemType}, #{problemSubType}, #{reason}, #{status})       " +
+            "     #{contactname}, #{priority}, #{problemType}, #{problemSubType}, #{reason}, #{status})       " +
             "ON DUPLICATE KEY UPDATE                                                                          " +
             "     accountId=#{accountid}, accountName=#{accountname}, id=#{id}, severity=#{severity},         " +
             "     productComponent=#{productComponent}, problemStatementQuestion=#{problemStatementQuestion}, " +
