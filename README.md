@@ -1,23 +1,17 @@
 # SFDC ticket monitor
 
-I felt it was important, in order to be a proactive Solutions Engineer, to get notified when customers open support cases.
+I felt it was important, as a Solutions Engineer, to get notified when customers open support cases.
 
 This app uses MySQL to persist ticket/notification statuses, SalesForce.com as the source of tickets, and Sendgrid to email. In order to run, it's necessary to edit a couple of properties files:
 1. `sfdc-ticket-monitor-migration/flyway.properties`
-2. `sfdc_ticket_monitor/sfdc_ticket_monitor.ini` (Python)
-3. `sfdc-ticket-monitor/src/main/resources/application.properties` (Java Spring)
+3. `sfdc-ticket-monitor/src/main/resources/application.properties`
 
 To create the MySQL tables, run the Flyway migration:
 
     cd sfdc-ticket-monitor-migration
     mvn clean compile flyway:migrate
 
-The run the Python app (preferably via cron, to get regular updates):
-
-    cd sfdc_ticket_monitor
-    python sfdc_ticket_monitor.py
-
-The Java Spring version is a long-running application: it checks for new tickets every 20 minutes.
+This is a long-running Java Spring application: it checks for new tickets every 20 minutes. To run:
 
     cd sfdc-ticket-monitor
     mvn clean package

@@ -1,10 +1,7 @@
 .idea/
-*.pyc
 *.iml
 
-sfdc_ticket_monitor.ini
 flyway.properties
-
 application.properties
 
 target/

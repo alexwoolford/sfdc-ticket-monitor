@@ -29,10 +29,11 @@ import java.util.*;
 @Component
 class TicketCapture {
 
-    // TODO: add logging throughout
+    // TODO: add logging throughout; rolling logs w/ gzipped archive
     // TODO: add basic healthcheck RESTful endpoint
     // TODO: get rid of Ticket POJO and use map instead
     // TODO: http page that displays all the current open tickets
+    // TODO: periodically refresh ContactName and AccountName fields in case they're updated in SFDC
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -77,7 +78,7 @@ class TicketCapture {
     private static final RunStats runStats = new RunStats();
 
     // run every 20 minutes; lock process for 19 minutes to prevent multiple concurrent runs
-    private static final int NINETEEN_MINUTES = 10 * 60 * 1000;
+    private static final int NINETEEN_MINUTES = 19 * 60 * 1000;
 
     @Scheduled(cron = "0 */20 * * * *")
     @SchedulerLock(name="captureTickets", lockAtMostFor = NINETEEN_MINUTES, lockAtLeastFor = NINETEEN_MINUTES)
