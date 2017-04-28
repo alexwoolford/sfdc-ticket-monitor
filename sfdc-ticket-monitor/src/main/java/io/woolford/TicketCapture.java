@@ -14,6 +14,7 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.woolford.database.entity.*;
 import io.woolford.database.mapper.DbMapper;
+import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,6 @@ import java.util.*;
 class TicketCapture {
 
     // TODO: add logging throughout
-    // TODO: prevent multiple concurrent runs
     // TODO: add basic healthcheck RESTful endpoint
     // TODO: get rid of Ticket POJO and use map instead
     // TODO: http page that displays all the current open tickets
@@ -76,7 +76,11 @@ class TicketCapture {
 
     private static final RunStats runStats = new RunStats();
 
+    // run every 20 minutes; lock process for 19 minutes to prevent multiple concurrent runs
+    private static final int NINETEEN_MINUTES = 10 * 60 * 1000;
+
     @Scheduled(cron = "0 */20 * * * *")
+    @SchedulerLock(name="captureTickets", lockAtMostFor = NINETEEN_MINUTES, lockAtLeastFor = NINETEEN_MINUTES)
     public void captureTickets() throws IOException, TemplateException {
 
         runStats.initialize();
