@@ -17,3 +17,9 @@ mysql.port=3306
 sendgrid.apikey=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
 sendgrid.from=me@domain.com
 sendgrid.to=me@domain.com
+
+# spring
+server.port=8088
+logging.file=sfdc-ticket-monitor.log
+logging.path=/var/log/sfdc-ticket-monitor
+logging.level.root=INFO

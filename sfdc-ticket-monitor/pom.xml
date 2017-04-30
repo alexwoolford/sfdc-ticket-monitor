@@ -21,8 +21,10 @@
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!--SalesForce-->
         <dependency>
             <groupId>com.force.api</groupId>
             <artifactId>force-wsc</artifactId>
@@ -38,6 +40,8 @@
             <artifactId>force-metadata-api</artifactId>
             <version>40.0.0</version>
         </dependency>
+
+        <!--MySQL-->
         <dependency>
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis</artifactId>
@@ -58,11 +62,15 @@
             <artifactId>spring-jdbc</artifactId>
             <version>4.3.8.RELEASE</version>
         </dependency>
+
+        <!--Sendgrid-->
         <dependency>
             <groupId>com.sendgrid</groupId>
             <artifactId>sendgrid-java</artifactId>
             <version>3.2.1</version>
         </dependency>
+
+
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
@@ -73,6 +81,8 @@
             <artifactId>guava</artifactId>
             <version>21.0</version>
         </dependency>
+
+        <!--locking-->
         <dependency>
             <groupId>net.javacrumbs.shedlock</groupId>
             <artifactId>shedlock-spring</artifactId>
@@ -83,6 +93,7 @@
             <artifactId>shedlock-provider-jdbc-template</artifactId>
             <version>0.10.0</version>
         </dependency>
+
     </dependencies>
 
     <build>

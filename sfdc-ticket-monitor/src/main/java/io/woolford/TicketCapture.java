@@ -30,7 +30,6 @@ import java.util.*;
 class TicketCapture {
 
     // TODO: add logging throughout; rolling logs w/ gzipped archive
-    // TODO: add basic healthcheck RESTful endpoint
     // TODO: get rid of Ticket POJO and use map instead
     // TODO: http page that displays all the current open tickets
     // TODO: periodically refresh ContactName and AccountName fields in case they're updated in SFDC
