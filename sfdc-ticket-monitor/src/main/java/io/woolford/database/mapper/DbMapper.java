@@ -57,8 +57,29 @@ public interface DbMapper {
             "LEFT OUTER JOIN sfdc_ticket_monitor.notification " +
             "ON ticket.CaseNumber = notification.CaseNumber   " +
             "WHERE notification.CaseNumber IS NULL            " +
-            "AND Status = 'Open'")
+            "AND Status = 'Open'                              ")
     List<Ticket> getOpenUnnotifiedTickets();
+
+    @Select("SELECT                          " +
+            "  caseNumber,                   " +
+            "  id,                           " +
+            "  accountId,                    " +
+            "  accountName,                  " +
+            "  severity,                     " +
+            "  productComponent,             " +
+            "  problemStatementQuestion,     " +
+            "  description,                  " +
+            "  currentStatusResolution,      " +
+            "  contactId,                    " +
+            "  contactName,                  " +
+            "  priority,                     " +
+            "  problemType,                  " +
+            "  problemSubType,               " +
+            "  reason,                       " +
+            "  status                        " +
+            "FROM sfdc_ticket_monitor.ticket " +
+            "WHERE Status = 'Open'           ")
+    List<Ticket> getOpenTickets();
 
     @Insert("INSERT INTO sfdc_ticket_monitor.account            " +
             "    (`accountId`, `accountName`)                   " +

@@ -15,4 +15,12 @@ This is a long-running Java Spring application: it checks for new tickets every 
 
     cd sfdc-ticket-monitor
     mvn clean package
-    nohup java -jar target/sfdc-ticket-monitor-1.0-SNAPSHOT.jar &
+    nohup java -jar target/sfdc-ticket-monitor-1.0-SNAPSHOT.jar >/dev/null 2>&1 &
+
+This emails new cases as they're opened. All current open cases can be reviewed at:
+
+    http://localhost:8088/open-cases
+
+A very simple health check (i.e. app is running) is accessible at:
+
+    http://localhost:8088/healthcheck

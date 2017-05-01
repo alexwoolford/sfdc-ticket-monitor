@@ -20,6 +20,6 @@ sendgrid.to=me@domain.com
 
 # spring
 server.port=8088
-logging.file=sfdc-ticket-monitor.log
+logging.file=/var/log/sfdc-ticket-monitor/sfdc-ticket-monitor.log
 logging.path=/var/log/sfdc-ticket-monitor
 logging.level.root=INFO

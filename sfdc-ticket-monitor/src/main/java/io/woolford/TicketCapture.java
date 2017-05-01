@@ -31,8 +31,10 @@ class TicketCapture {
 
     // TODO: add logging throughout; rolling logs w/ gzipped archive
     // TODO: get rid of Ticket POJO and use map instead
-    // TODO: http page that displays all the current open tickets
     // TODO: periodically refresh ContactName and AccountName fields in case they're updated in SFDC
+    // TODO: configure/document steps to run as systemd service
+    // TODO: refactor so the renderTemplate function doesn't appear in more than one class
+    // TODO: make app deployable as self-contained Docker container
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

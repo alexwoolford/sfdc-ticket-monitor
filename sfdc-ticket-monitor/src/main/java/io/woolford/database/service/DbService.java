@@ -34,6 +34,10 @@ class DbService {
         return dbMapper.getOpenUnnotifiedTickets();
     }
 
+    public List<Ticket> getOpenTickets(){
+        return dbMapper.getOpenTickets();
+    }
+
     public void upsertAccount(Account account){
         dbMapper.upsertAccount(account);
     }
