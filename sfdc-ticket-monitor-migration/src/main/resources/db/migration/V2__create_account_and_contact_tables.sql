@@ -2,7 +2,8 @@
 CREATE TABLE account (
   AccountId VARCHAR(20),
   PRIMARY KEY (AccountId),
-  AccountName VARCHAR(255)
+  AccountName VARCHAR(255),
+  CustomerRecordId2 VARCHAR(20)
 );
 
 CREATE TABLE contact (

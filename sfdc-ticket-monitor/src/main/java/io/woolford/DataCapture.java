@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
@@ -35,6 +36,7 @@ class TicketCapture {
     // TODO: configure/document steps to run as systemd service
     // TODO: refactor so the renderTemplate function doesn't appear in more than one class
     // TODO: make app deployable as self-contained Docker container
+    // TODO: populate account table with all accounts, not just those with open tickets. This is important for the packet detection query
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -81,7 +83,8 @@ class TicketCapture {
     // run every 20 minutes; lock process for 19 minutes to prevent multiple concurrent runs
     private static final int NINETEEN_MINUTES = 19 * 60 * 1000;
 
-    @Scheduled(cron = "0 */20 * * * *")
+//    @Scheduled(cron = "0 */20 * * * *")
+//    @PostConstruct
     @SchedulerLock(name="captureTickets", lockAtMostFor = NINETEEN_MINUTES, lockAtLeastFor = NINETEEN_MINUTES)
     public void captureTickets() throws IOException, TemplateException {
 
@@ -144,6 +147,13 @@ class TicketCapture {
         runStats.setEndRun();
         dbMapper.insertRunStats(runStats);
 
+    }
+
+    //    @Scheduled(cron = "0 */20 * * * *")
+    @PostConstruct
+    @SchedulerLock(name="captureBundles", lockAtMostFor = NINETEEN_MINUTES, lockAtLeastFor = NINETEEN_MINUTES)
+    public void captureBundles() {
+        logger.info("captureBundles");
     }
 
     private String renderTemplate(Template template, Map map) throws IOException, TemplateException {
@@ -273,20 +283,23 @@ class TicketCapture {
 
         Account account = new Account();
         String accountName;
+        String customerRecordId2;
         if (accountId.length() == 0){
             accountName = "";
         } else if (dbMapper.getAccountById(accountId) == null){
             QueryResult queryResults = null;
             try {
-                queryResults = connection.query("SELECT name FROM account WHERE id='" + accountId + "'");
+                queryResults = connection.query("SELECT name, customer_record_id2__c FROM account WHERE id='" + accountId + "'");
                 runStats.incrementSfdcQueries();
             } catch (ConnectionException e) {
                 e.printStackTrace();
                 runStats.incrementExceptions();
             }
             accountName = String.valueOf(queryResults.getRecords()[0].getChildren("Name").next().getValue());
+            customerRecordId2 = String.valueOf(queryResults.getRecords()[0].getChildren("Customer_Record_ID2__c").next().getValue());
             account.setAccountId(accountId);
             account.setAccountName(accountName);
+            account.setCustomerRecordId2(customerRecordId2);
             dbMapper.upsertAccount(account);
             logger.info("AccountId: " + accountId + "; accountName: " + accountName + " retrieved from SFDC");
         } else {
@@ -311,5 +324,7 @@ class TicketCapture {
         // TODO: check that email was sent successfully
         logger.info("Email: " + subject + " sent");
     }
+
+
 
 }
