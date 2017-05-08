@@ -3,6 +3,7 @@ package io.woolford;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import io.woolford.database.entity.BundleEnriched;
 import io.woolford.database.entity.Ticket;
 import io.woolford.database.mapper.DbMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,18 @@ public class Controller {
         openTicketMap.put("openTickets", openTickets);
 
         return renderTemplate(openTicketTemplate, openTicketMap);
+    }
+
+    @RequestMapping("/recent-bundles")
+    String recentBundles() throws IOException, TemplateException {
+
+        List<BundleEnriched> recentBundles = dbMapper.getMostRecentBundles();
+        Template recentBundleTemplate = ftlConfig.getTemplate("most-recent-bundles.ftl");
+
+        Map<String, Object> recentBundleMap = new HashMap<String, Object>();
+        recentBundleMap.put("recentBundles", recentBundles);
+
+        return renderTemplate(recentBundleTemplate, recentBundleMap);
     }
 
     // TODO: this code is consolidated

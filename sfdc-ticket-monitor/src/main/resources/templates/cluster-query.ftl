@@ -1,7 +1,12 @@
 SELECT
+  Id,
   Name,
-  Bundle_Date__c,
-  Cluster__c
-FROM Bundle__c
-WHERE Name LIKE <#list customerRecordId2List as customerRecordId2>
-'${customerRecordId2}%'<#sep> OR Name LIKE</#list>
+  Num_Masters__c,
+  Num_Slaves__c,
+  Total_Storage__c,
+  Used_Storage__c
+FROM Cluster__c
+WHERE id IN (
+<#list clusterIdList as clusterId>
+'${clusterId}'<#sep>,
+</#list>)

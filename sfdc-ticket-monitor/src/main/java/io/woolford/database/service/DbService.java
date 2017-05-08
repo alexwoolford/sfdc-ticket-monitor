@@ -46,6 +46,10 @@ class DbService {
         return dbMapper.getAccountById(accountId);
     }
 
+    public List<Account> getAllAccounts(){
+        return dbMapper.getAllAccounts();
+    }
+
     public Contact getContactById(String contactId){
         return dbMapper.getContactById(contactId);
     }
@@ -54,8 +58,24 @@ class DbService {
         return dbMapper.getSfdcTableColumns(tableName);
     }
 
-    public void  insertRunStats(RunStats runStats){
+    public void insertRunStats(RunStats runStats){
         dbMapper.insertRunStats(runStats);
+    }
+
+    public void upsertBundle(Bundle bundle){
+        dbMapper.upsertBundle(bundle);
+    }
+
+    public List<String> getDistinctClusterIds() {
+        return dbMapper.getDistinctClusterIds();
+    }
+
+    public void upsertCluster(Cluster cluster){
+        dbMapper.upsertCluster(cluster);
+    }
+
+    public List<BundleEnriched> getMostRecentBundles() {
+        return dbMapper.getMostRecentBundles();
     }
 
 }

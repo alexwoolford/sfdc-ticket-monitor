@@ -81,11 +81,13 @@ public interface DbMapper {
             "WHERE Status = 'Open'           ")
     List<Ticket> getOpenTickets();
 
-    @Insert("INSERT INTO sfdc_ticket_monitor.account            " +
-            "    (`accountId`, `accountName`)                   " +
-            "VALUES                                             " +
-            "    (#{accountId}, #{accountName})                 " +
-            "ON DUPLICATE KEY UPDATE accountName=#{accountName} ")
+    @Insert("INSERT INTO sfdc_ticket_monitor.account                  " +
+            "    (`accountId`, `accountName`, `customerRecordId2`)    " +
+            "VALUES                                                   " +
+            "    (#{accountId}, #{accountName}, #{customerRecordId2}) " +
+            "ON DUPLICATE KEY UPDATE                                  " +
+            "     accountName=#{accountName},                         " +
+            "     customerRecordId2=#{customerRecordId2}              ")
     void upsertAccount(Account account);
 
     @Select("SELECT                            " +
@@ -94,6 +96,13 @@ public interface DbMapper {
             "FROM sfdc_ticket_monitor.account  " +
             "WHERE accountId=#{accountId}      ")
     Account getAccountById(String accountId);
+
+    @Select("SELECT                           " +
+            "  accountId,                     " +
+            "  accountName,                   " +
+            "  CustomerRecordId2              " +
+            "FROM sfdc_ticket_monitor.account ")
+    List<Account> getAllAccounts();
 
     @Insert("INSERT INTO sfdc_ticket_monitor.contact            " +
             "    (`contactId`, `contactName`)                   " +
@@ -121,5 +130,79 @@ public interface DbMapper {
             "VALUES                                                                               " +
             "    (#{startRun}, #{endRun}, #{sfdcQueries}, #{cacheHits}, #{exceptions}, #{emails}) ")
     void insertRunStats(RunStats runStats);
+
+    @Insert("INSERT INTO sfdc_ticket_monitor.bundle           " +
+            "    (`bundleName`, `bundleDate`, `clusterId`)    " +
+            "VALUES                                           " +
+            "    (#{bundleName}, #{bundleDate}, #{clusterId}) " +
+            "ON DUPLICATE KEY UPDATE                          " +
+            "     bundleDate=#{bundleDate},                   " +
+            "     clusterId=#{clusterId}                      ")
+    void upsertBundle(Bundle bundle);
+
+    @Select("SELECT DISTINCT  " +
+            "    clusterId    " +
+            "FROM bundle      ")
+    List<String> getDistinctClusterIds();
+
+    @Insert("INSERT INTO sfdc_ticket_monitor.cluster                                                          " +
+            "    (`clusterId`, `clusterName`, `numMasters`, `numSlaves`, `usedStorage`, `totalStorage`)       " +
+            "VALUES                                                                                           " +
+            "    (#{clusterId}, #{clusterName}, #{numMasters}, #{numSlaves}, #{usedStorage}, #{totalStorage}) " +
+            "ON DUPLICATE KEY UPDATE                                                                          " +
+            "     clusterName=#{clusterName},                                                                 " +
+            "     numMasters=#{numMasters},                                                                   " +
+            "     numSlaves=#{numSlaves},                                                                     " +
+            "     usedStorage=#{usedStorage},                                                                 " +
+            "     totalStorage=#{totalStorage}                                                                ")
+    void upsertCluster(Cluster cluster);
+
+    @Select("SELECT                                                         " +
+            "  bundle_a.AccountName,                                        " +
+            "  bundle_a.clusterName,                                        " +
+            "  bundle_a.bundleName,                                         " +
+            "  bundle_a.bundleDate,                                         " +
+            "  bundle_a.numMasters,                                         " +
+            "  bundle_a.numSlaves,                                          " +
+            "  bundle_a.usedStorage,                                        " +
+            "  bundle_a.totalStorage                                        " +
+            "FROM                                                           " +
+            "  (SELECT                                                      " +
+            "    AccountName,                                               " +
+            "    clusterName,                                               " +
+            "    bundleName,                                                " +
+            "    bundleDate,                                                " +
+            "    numMasters,                                                " +
+            "    numSlaves,                                                 " +
+            "    usedStorage,                                               " +
+            "    totalStorage                                               " +
+            "  FROM bundle                                                  " +
+            "  INNER JOIN cluster                                           " +
+            "  ON bundle.clusterId = cluster.clusterId                      " +
+            "  INNER JOIN account                                           " +
+            "  ON upper(substring(bundleName, 1, 10)) = CustomerRecordId2   " +
+            "  ORDER BY AccountName, clusterName, bundleDate DESC) bundle_a " +
+            "LEFT JOIN                                                      " +
+            "  (SELECT                                                      " +
+            "    AccountName,                                               " +
+            "    clusterName,                                               " +
+            "    bundleName,                                                " +
+            "    bundleDate,                                                " +
+            "    numMasters,                                                " +
+            "    numSlaves,                                                 " +
+            "    usedStorage,                                               " +
+            "    totalStorage                                               " +
+            "  FROM bundle                                                  " +
+            "  INNER JOIN cluster                                           " +
+            "  ON bundle.clusterId = cluster.clusterId                      " +
+            "  INNER JOIN account                                           " +
+            "  ON upper(substring(bundleName, 1, 10)) = CustomerRecordId2   " +
+            "  ORDER BY AccountName, clusterName, bundleDate DESC) bundle_b " +
+            "ON bundle_a.AccountName = bundle_b.AccountName                 " +
+            "AND bundle_a.clusterName = bundle_b.clusterName                " +
+            "AND bundle_b.bundleDate > bundle_a.bundleDate                  " +
+            "WHERE bundle_b.bundleDate IS NULL                              " +
+            "ORDER BY bundleDate DESC                                       ")
+    List<BundleEnriched> getMostRecentBundles();
 
 }

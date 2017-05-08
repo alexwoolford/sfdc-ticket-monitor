@@ -22,13 +22,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Component
-class TicketCapture {
+class DataCapture {
 
     // TODO: add logging throughout; rolling logs w/ gzipped archive
     // TODO: get rid of Ticket POJO and use map instead
@@ -37,6 +39,7 @@ class TicketCapture {
     // TODO: refactor so the renderTemplate function doesn't appear in more than one class
     // TODO: make app deployable as self-contained Docker container
     // TODO: populate account table with all accounts, not just those with open tickets. This is important for the packet detection query
+    // TODO: HTML output is sooooo ugly. Fix it.
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -72,8 +75,8 @@ class TicketCapture {
     private final Configuration ftlConfig = new Configuration(Configuration.VERSION_2_3_26);
 
     @Autowired
-    private TicketCapture(DbMapper dbMapper){
-        ftlConfig.setClassForTemplateLoading(TicketCapture.class, "/templates");
+    private DataCapture(DbMapper dbMapper){
+        ftlConfig.setClassForTemplateLoading(DataCapture.class, "/templates");
         ftlConfig.setDefaultEncoding("UTF-8");
         this.dbMapper = dbMapper;
     }
@@ -83,8 +86,7 @@ class TicketCapture {
     // run every 20 minutes; lock process for 19 minutes to prevent multiple concurrent runs
     private static final int NINETEEN_MINUTES = 19 * 60 * 1000;
 
-//    @Scheduled(cron = "0 */20 * * * *")
-//    @PostConstruct
+    @Scheduled(cron = "0 */20 * * * *")
     @SchedulerLock(name="captureTickets", lockAtMostFor = NINETEEN_MINUTES, lockAtLeastFor = NINETEEN_MINUTES)
     public void captureTickets() throws IOException, TemplateException {
 
@@ -149,11 +151,113 @@ class TicketCapture {
 
     }
 
-    //    @Scheduled(cron = "0 */20 * * * *")
-    @PostConstruct
+    @Scheduled(cron = "0 */30 * * * *")
     @SchedulerLock(name="captureBundles", lockAtMostFor = NINETEEN_MINUTES, lockAtLeastFor = NINETEEN_MINUTES)
-    public void captureBundles() {
+    public void captureBundles() throws IOException, TemplateException, ParseException {
         logger.info("captureBundles");
+
+        runStats.initialize();
+
+        // create connection to SFDC
+        ConnectorConfig config = new ConnectorConfig();
+        config.setUsername(sfdcEmail);
+        config.setPassword(sfdcPassword + sfdcToken);
+        config.setAuthEndpoint(sfdcAuthEndpoint);
+        try {
+            connection = Connector.newConnection(config);
+            logger.info("Created connection to SFDC");
+        } catch (ConnectionException e) {
+            logger.error(e.toString());
+            runStats.incrementExceptions();
+        }
+
+        List<String> customerRecordId2List = new ArrayList<>();
+        for (Account account : dbMapper.getAllAccounts()){
+            customerRecordId2List.add(account.getCustomerRecordId2());
+        }
+
+        Map bundleQueryMap = new HashMap();
+        bundleQueryMap.put("customerRecordId2List", customerRecordId2List);
+
+        // render the Freemarker template
+        Template bundleQueryTemplate = ftlConfig.getTemplate("bundle-query.ftl");
+        String bundleQuery = renderTemplate(bundleQueryTemplate, bundleQueryMap);
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
+        QueryResult queryResults;
+        try {
+            queryResults = connection.query(bundleQuery);
+            runStats.incrementSfdcQueries();
+            if (queryResults.getSize() > 0) {
+                for (int i=0; i < queryResults.getRecords().length; i++) {
+
+                    String name = String.valueOf(queryResults.getRecords()[i].getChildren("Name").next().getValue());
+                    String bundleDateString = String.valueOf(queryResults.getRecords()[i].getChildren("Bundle_Date__c").next().getValue());
+                    String cluster = String.valueOf(queryResults.getRecords()[i].getChildren("Cluster__c").next().getValue());
+
+                    Bundle bundle = new Bundle();
+                    bundle.setBundleName(name);
+                    bundle.setBundleDate(simpleDateFormat.parse(bundleDateString));
+                    bundle.setClusterId(cluster);
+
+                    dbMapper.upsertBundle(bundle);
+                    logger.info(bundle.toString());
+
+                }
+            }
+        } catch (ConnectionException e) {
+            e.printStackTrace();
+            runStats.incrementExceptions();
+        }
+
+
+        List<String> clusterIdList = new ArrayList<>();
+        clusterIdList.addAll(dbMapper.getDistinctClusterIds());
+
+        Map clusterMap = new HashMap();
+        clusterMap.put("clusterIdList", clusterIdList);
+
+        Template clusterQueryTemplate = ftlConfig.getTemplate("cluster-query.ftl");
+        String clusterQuery = renderTemplate(clusterQueryTemplate, clusterMap);
+
+        try {
+            queryResults = connection.query(clusterQuery);
+            runStats.incrementSfdcQueries();
+            if (queryResults.getSize() > 0) {
+                for (int i=0; i < queryResults.getRecords().length; i++) {
+
+                    String clusterId = String.valueOf(queryResults.getRecords()[i].getChildren("Id").next().getValue());
+                    String clusterName = String.valueOf(queryResults.getRecords()[i].getChildren("Name").next().getValue());
+                    Float numMasters = Float.parseFloat(String.valueOf(queryResults.getRecords()[i].getChildren("Num_Masters__c").next().getValue()));
+                    Float numSlaves = Float.parseFloat(String.valueOf(queryResults.getRecords()[i].getChildren("Num_Slaves__c").next().getValue()));
+                    BigDecimal usedStorage = new BigDecimal(String.valueOf(queryResults.getRecords()[i].getChildren("Used_Storage__c").next().getValue()));
+                    BigDecimal totalStorage = new BigDecimal(String.valueOf(queryResults.getRecords()[i].getChildren("Total_Storage__c").next().getValue()));
+
+                    Cluster cluster = new Cluster();
+                    cluster.setClusterId(clusterId);
+                    cluster.setClusterName(clusterName);
+                    cluster.setNumMasters(numMasters);
+                    cluster.setNumSlaves(numSlaves);
+                    cluster.setUsedStorage(usedStorage);
+                    cluster.setTotalStorage(totalStorage);
+
+                    dbMapper.upsertCluster(cluster);
+                    logger.info(cluster.toString());
+
+                }
+            }
+        } catch (ConnectionException e) {
+            e.printStackTrace();
+            runStats.incrementExceptions();
+        }
+
+        for (BundleEnriched bundleEnriched : dbMapper.getMostRecentBundles()){
+            logger.info(bundleEnriched.toString());
+        }
+
+        logger.info(clusterIdList.toString());
+
     }
 
     private String renderTemplate(Template template, Map map) throws IOException, TemplateException {
@@ -324,7 +428,5 @@ class TicketCapture {
         // TODO: check that email was sent successfully
         logger.info("Email: " + subject + " sent");
     }
-
-
 
 }
