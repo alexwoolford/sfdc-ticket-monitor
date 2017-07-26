@@ -39,10 +39,10 @@ class DataCapture {
     // TODO: refactor so the renderTemplate function doesn't appear in more than one class
     // TODO: make app deployable as self-contained Docker container
     // TODO: populate account table with all accounts, not just those with open tickets. This is important for the packet detection query
-    // TODO: HTML output is sooooo ugly. Fix it.
     // TODO: populate clusters table based on ALL the clusters and not just those with open tickets
     // TODO: alert on expired credentials
     // TODO: handle scenario where there are more than 500 cases for the list of accounts
+    // TODO: add 'surpress/hide' button to get rid of old/irrelevant tickets
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

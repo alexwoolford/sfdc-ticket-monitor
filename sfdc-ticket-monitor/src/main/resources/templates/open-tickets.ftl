@@ -18,65 +18,90 @@
 <head>
     <title>open Salesforce.com tickets</title>
     <style>
-        table, th, td {
-            border: 1px solid black;
-            border-collapse: collapse;
+
+        .wrap {
+            width: 1200px;
         }
-        th, td {
+
+        .wrap table {
+            width: 1200px;
+            table-layout: fixed;
+        }
+
+        table tr td {
             padding: 5px;
-            text-align: left;
+            border: 1px solid #eee;
+            word-wrap: break-word;
         }
+
+        table.head tr td {
+            padding: 5px;
+            border: 1px solid #eee;
+            word-wrap: break-word;
+            background: #eee;
+        }
+
+        .inner_table {
+            height: 600px;
+            overflow-y: auto;
+        }
+
     </style>
 </head>
 <body>
 
-<table style="width:100%">
+<div class="wrap">
 
-    <tr>
-        <th bgcolor="#D1D1D1">account</th>
-        <th bgcolor="#D1D1D1">case #</th>
-        <th bgcolor="#D1D1D1">severity</th>
-        <th bgcolor="#D1D1D1">current status</th>
-        <th bgcolor="#D1D1D1">product component</th>
-        <th bgcolor="#D1D1D1">problem statement/question</th>
-        <th bgcolor="#D1D1D1">contact</th>
-        <th bgcolor="#D1D1D1">problem type</th>
-        <th bgcolor="#D1D1D1">problem sub-type</th>
-    </tr>
-
-    <#list openTickets as openTicket>
+    <table class="head">
         <tr>
-            <td>
-                ${(openTicket.accountName)!}
-            </td>
-            <td>
-                <a href="https://hortonworks.my.salesforce.com/${(openTicket.id)!}?nooverride=1">${(openTicket.caseNumber)!}</a>
-            </td>
-            <td bgcolor=${sev_color(openTicket.severity)}>
-                ${(openTicket.severity)!}
-            </td>
-            <td>
-                ${(openTicket.currentStatusResolution)!}
-            </td>
-            <td>
-                ${(openTicket.productComponent)!}
-            </td>
-            <td>
-                ${(openTicket.problemStatementQuestion)!}
-            </td>
-            <td>
-                ${(openTicket.contactName)!}
-            </td>
-            <td>
-                ${(openTicket.problemType)!}
-            </td>
-            <td>
-                ${(openTicket.problemSubType)!}
-            </td>
+            <td width="100px">account</td>
+            <td width="70px">case #</td>
+            <td width="100px">severity</td>
+            <td width="250px">current status</td>
+            <td width="100px">product component</td>
+            <td width="250px">problem statement/question</td>
+            <td width="100px">contact</td>
+            <td width="100px">problem type</td>
         </tr>
-    </#list>
+    </table>
 
-</table>
+    <div class="inner_table">
+        <table>
+
+        <#list openTickets as openTicket>
+            <tr>
+                <td width="100px">
+                    ${(openTicket.accountName)!}
+                </td>
+                <td width="70px">
+                    <a href="https://hortonworks.my.salesforce.com/${(openTicket.id)!}?nooverride=1">${(openTicket.caseNumber)!}</a>
+                </td>
+                <td bgcolor=${sev_color(openTicket.severity)} width="100px">
+                    ${(openTicket.severity)!}
+                </td>
+                <td width="250px">
+                    ${(openTicket.currentStatusResolution)!}
+                </td>
+                <td width="100px">
+                    ${(openTicket.productComponent)!}
+                </td>
+                <td width="250px">
+                    ${(openTicket.problemStatementQuestion)!}
+                </td>
+                <td width="100px">
+                    ${(openTicket.contactName)!}
+                </td>
+                <td width="100px">
+                    ${(openTicket.problemType)!}
+                </td>
+            </tr>
+        </#list>
+
+        </table>
+
+    </div>
+
+</div>
 
 </body>
 </html>
