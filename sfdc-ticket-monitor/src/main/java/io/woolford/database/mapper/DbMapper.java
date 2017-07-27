@@ -60,25 +60,28 @@ public interface DbMapper {
             "AND Status = 'Open'                              ")
     List<Ticket> getOpenUnnotifiedTickets();
 
-    @Select("SELECT                          " +
-            "  caseNumber,                   " +
-            "  id,                           " +
-            "  accountId,                    " +
-            "  accountName,                  " +
-            "  severity,                     " +
-            "  productComponent,             " +
-            "  problemStatementQuestion,     " +
-            "  description,                  " +
-            "  currentStatusResolution,      " +
-            "  contactId,                    " +
-            "  contactName,                  " +
-            "  priority,                     " +
-            "  problemType,                  " +
-            "  problemSubType,               " +
-            "  reason,                       " +
-            "  status                        " +
-            "FROM sfdc_ticket_monitor.ticket " +
-            "WHERE Status = 'Open'           ")
+    @Select("SELECT                                             " +
+            "  ticket.caseNumber,                               " +
+            "  id,                                              " +
+            "  accountId,                                       " +
+            "  accountName,                                     " +
+            "  severity,                                        " +
+            "  productComponent,                                " +
+            "  problemStatementQuestion,                        " +
+            "  description,                                     " +
+            "  currentStatusResolution,                         " +
+            "  contactId,                                       " +
+            "  contactName,                                     " +
+            "  priority,                                        " +
+            "  problemType,                                     " +
+            "  problemSubType,                                  " +
+            "  reason,                                          " +
+            "  status                                           " +
+            "FROM sfdc_ticket_monitor.ticket                    " +
+            "LEFT OUTER JOIN sfdc_ticket_monitor.ignore_tickets " +
+            "ON ticket.caseNumber = ignore_tickets.caseNumber   " +
+            "WHERE ignore_tickets.caseNumber IS NULL            " +
+            "AND Status = 'Open'                                ")
     List<Ticket> getOpenTickets();
 
     @Insert("INSERT INTO sfdc_ticket_monitor.account                  " +
@@ -202,7 +205,21 @@ public interface DbMapper {
             "AND bundle_a.clusterName = bundle_b.clusterName                " +
             "AND bundle_b.bundleDate > bundle_a.bundleDate                  " +
             "WHERE bundle_b.bundleDate IS NULL                              " +
+            "AND bundle_a.bundleName NOT IN                                 " +
+            "  (SELECT bundleName FROM ignore_bundles)                      " +
             "ORDER BY bundleDate DESC                                       ")
     List<BundleEnriched> getMostRecentBundles();
+
+    @Insert("INSERT INTO sfdc_ticket_monitor.ignore_tickets " +
+            "    (`caseNumber`)                             " +
+            "VALUES                                         " +
+            "    (#{caseNumber})                            ")
+    void insertIgnoreTicket(String caseNumber);
+
+    @Insert("INSERT INTO sfdc_ticket_monitor.ignore_bundles " +
+            "    (`bundleName`)                             " +
+            "VALUES                                         " +
+            "    (#{bundleName})                            ")
+    void insertIgnoreBundle(String bundleName);
 
 }

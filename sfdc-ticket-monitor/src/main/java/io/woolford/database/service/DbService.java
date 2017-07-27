@@ -18,10 +18,6 @@ class DbService {
         this.dbMapper = dbMapper;
     }
 
-//    public void upsertTicket(Ticket ticket){
-//        dbMapper.upsertTicket(ticket);
-//    }
-
     public void upsertTicket(Map ticket){
         dbMapper.upsertTicket(ticket);
     }
@@ -76,6 +72,14 @@ class DbService {
 
     public List<BundleEnriched> getMostRecentBundles() {
         return dbMapper.getMostRecentBundles();
+    }
+
+    public void insertIgnoreTicket(String caseNumber){
+        dbMapper.insertIgnoreTicket(caseNumber);
+    }
+
+    public void insertIgnoreBundle(String bundleName){
+        dbMapper.insertIgnoreBundle(bundleName);
     }
 
 }

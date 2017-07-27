@@ -8,6 +8,7 @@ import io.woolford.database.entity.Ticket;
 import io.woolford.database.mapper.DbMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,7 +28,7 @@ public class Controller {
     DbMapper dbMapper;
 
     // TODO: make stats call that returns counts for recent runs, etc...
-    // TODO: make 'ignore ticket' endpoint and button so user can exclude tickets from the open-tickets page
+    // TODO: make 'ignore ticket' and 'ignore bundle' buttons so user can exclude tickets from the open-tickets/recent-bundles pages
 
     @Autowired
     private Controller(DbMapper dbMapper){
@@ -65,6 +66,17 @@ public class Controller {
 
         return renderTemplate(recentBundleTemplate, recentBundleMap);
     }
+
+    @RequestMapping("/ignore-ticket/{caseNumber}")
+    public void ignoreTicket(@PathVariable String caseNumber) {
+        dbMapper.insertIgnoreTicket(caseNumber);
+    }
+
+    @RequestMapping("/ignore-bundle/{bundleName}")
+    public void ignoreBundle(@PathVariable String bundleName) {
+        dbMapper.insertIgnoreBundle(bundleName);
+    }
+
 
     // TODO: this code is consolidated
     private String renderTemplate(Template template, Map map) throws IOException, TemplateException {
